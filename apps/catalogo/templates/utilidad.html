@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <style>
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">Reporte Utilidad</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Reportes</li>
+                <li class="active"> Utilidad</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+{% endblock %}
+
+{% block container %}
+    <div class="row">
+        <div class="col-lg-12 col-md-12 col-sm-12 text-center">
+            <h3> Registro de Utilidad de la Semana {{ semanaSelected }}</h3>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 row floating-labels mt-4" style="margin: 0 auto;">
+            <select style="width: 50%;" class="form-control selectpicker p-0" id="noSemanaUtilidad"
+                        name="noSemanaUtilidad">
+                    {% for i in noSemanas %}
+                        <option {% if semanaSelected == i  %} selected {% endif %} value="{{i}}"> {{i}}</option>
+                    {% endfor%}
+                </select><span class="highlight"></span> <span class="bar"></span>
+            <label for="eq_type_orden"> No Semanas</label>
+
+            <div>
+                <button class="btn btn-success" style="margin-left: 10%;" onclick="reloadSemana()"> Buscar <i
+                    class="icon-search ml-3"
+                    style="font-size: 1.5rem"></i></button>
+            </div>
+            <div>
+                <button class="btn btn-danger" style="margin-left: 10%;" onclick="window.location.href = '{% url "catalogo:utilidad-ordenes" %}'"> Borrar Filtro <i
+                    class="icon-search ml-3"
+                    style="font-size: 1.5rem"></i></button>
+            </div>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 text-center mt-5">
+            <div class="table-responsive">
+                    <table id="myTableSem" class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th class="text-center"> Fecha</th>
+                            <th class="text-center"> Venta</th>
+                            <th class="text-center"> Compra</th>
+                            <th class="text-center"> Utilidad</th>
+                            <th class="text-center"> Margen</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for dia in ordenes_dias %}
+                            <tr>
+                                <td> {{ dia.dia_semana|date:'l, F d,Y' }}</td>
+                                <td> ${{ dia.venta }}</td>
+                                <td> ${{ dia.compra }}</td>
+                                <td> ${{ dia.utilidad }}</td>
+                                <td> %{{ dia.margen|floatformat:3 }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+            </div>
+        </div>
+        {% for calculoSemana in ordenes_semana_customer %}
+            <hr style="width: 100%;border: 5px solid;">
+            <div class="col-lg-12 col-md-12 col-sm-12 text-center">
+                <h4> {{ calculoSemana.cliente }}</h4>
+            </div>
+            <div class="col-lg-12 col-md-12 col-sm-12 text-center mt-4">
+                <div class="table-responsive">
+                    <table id="myTableSem" class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th class="text-center"> Fecha</th>
+                            <th class="text-center"> Venta</th>
+                            <th class="text-center"> Compra</th>
+                            <th class="text-center"> Utilidad</th>
+                            <th class="text-center"> Margen</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for dia in calculoSemana.data %}
+                            <tr>
+                                <td> {{ dia.dia_semana|date:'l, F d,Y' }}</td>
+                                <td> ${{ dia.venta }}</td>
+                                <td> ${{ dia.compra }}</td>
+                                <td> ${{ dia.utilidad }}</td>
+                                <td> %{{ dia.margen|floatformat:3 }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    <script>
+
+        const reloadSemana = () => {
+            var semanaSelected = $('#noSemanaUtilidad').val()
+            window.location.href = `{% url "catalogo:utilidad-ordenes" %}?semana=${semanaSelected}`
+        }
+    </script>
+{% endblock %}
+    

@@ -1,0 +1,588 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+
+    <style>
+        .floating-labels .form-control {
+            font-size: 14px !important;
+        }
+
+        .floating-labels label {
+            font-size: 14px !important;
+        }
+
+        .footable-row-detail-inner {
+            width: 100% !important;
+        }
+
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">LISTADO</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Catalogos</li>
+                <li class="active">Ordenes</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row">
+            <div class="col-lg-6">
+                <ul class="nav nav-pills">
+                    {% if not contabilidad%}
+                    <li class="nav-item">
+                        <a class="nav-link {% if filtro == 1 %}
+                        active
+                        {% endif %}" href="#" onclick="redirectFilter()">Abiertas</a>
+                    </li>
+                    {% endif%}
+                    <li class="nav-item">
+                        <a class="nav-link {% if filtro == 2 %}
+                        active
+                        {% endif %}" href="#" onclick="redirectFilter(16)">Completas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if filtro == 4 %}
+                        active
+                        {% endif %}" href="#" onclick="redirectFilter(100)">Sin Facturar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if filtro == 3 %}
+                        active
+                        {% endif %} " href="#" onclick="redirectFilter()">Todas </a>
+                    </li>
+                    
+                
+                </ul>
+            </div>
+            <div class="col-lg-6 text-right">
+                <div class="button-box">
+                    {#                <button class="btn btn-info"> Exportar <i class="ti-share ml-3"#}
+                    {#                                                          style="font-size: 1.5rem"></i></button>#}
+                    
+                    {% if contabilidad %}
+                        {%if filtro == 2%}
+                            <button class="btn btn-info" onclick="redirectFilterExport(16)"> Exportar <i class="ti-export"></i></button>
+                        {% elif filtro == 4%}
+                            <button class="btn btn-info" onclick="redirectFilterExport(100)"> Exportar <i class="ti-export"></i></button>
+                        {%else%}
+                            <button class="btn btn-info" onclick="redirectFilterExport('')"> Exportar <i class="ti-export"></i></button>
+                        {%endif%}
+                    {% endif %}
+                        
+    
+                    <button class="btn btn-success" onclick="window.location.href = '{% url "catalogo:orden-new" %}'"> Nueva
+                        Orden
+                        <i class="ti-file ml-3"
+                           style="font-size: 1.5rem"></i></button>
+                </div>
+            </div>
+            <div class="col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Orden</th>
+                        <th>W/O #</th>
+                        {% if contabilidad%}
+                            <th>Carrier</th>
+                            <th>Customer</th>
+                            <th> Shipment Status </th>
+                            <th> Factura SIGO </th>
+                            <th> Fecha Factura SIGO </th>
+                            <th> Fecha Pago SIGO </th>
+                            <th> Cantidad Pago SIGO </th>
+                            <th> Fecha Deposito </th>
+                            <th> Monto </th>
+                            <th> Saldo </th>
+                            <th> Fecha Pago </th>
+                            <th> Monto Pago </th>
+                        {%else%}
+                            {% if filtro ==  2%}
+                                <th> Factura SIGO </th>
+                                <th> Fecha Factura SIGO </th>
+                                <th> Fecha Pago SIGO </th>
+                            {%else%}
+                                <th>Shipment Status</th>
+                                <th>PO Status</th>
+                                <th>Carrier</th>
+                            {% endif%}
+                            <th>Shippdate</th>
+                            <th>Customer</th>
+                            <th>Origin</th>
+                            <th>Destination</th>
+                            <th>Eq Type </th>
+                            <th>Creado por:</th>
+                        {%endif%}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for orden in ordenes %}
+                        <tr>
+                            <td class="text-center">
+                                <a type="button" href="{% url 'catalogo:orden-creacion-pdf' %}?orden={{orden.id}}" class="btn btn-success btn-sm"
+                                        data-placement="top" target="_blank"><i
+                                        class="ti-file"></i></a>
+                                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip"
+                                        data-placement="top" title="Editar"
+                                        onclick="window.location.href = '{% url "catalogo:orden-edit" orden.id %}?forloop={{ orden.id }}'">
+                                    <i class="ti-pencil-alt"></i></button>
+
+                                <button type="button" class="btn btn-danger btn-sm" data-toggle="tooltip"
+                                        onclick="deleteOrden('ORD-000{{ orden.id }}','{{ orden.id }}')"
+                                        data-placement="top" title="Eliminar"><i class="ti-trash"></i></button>
+
+                            </td>
+                            <td> ORD-000{{ orden.id }}</td>
+                            <td> {{ orden.wo }}</td>
+                            {% if contabilidad %}
+                                <td> {{ orden.proveedor }}</td>
+                                <td> {{ orden.cliente }}</td>
+                                <td class="text-center">
+                                    <span type="button" class="label label-rouded" data-toggle="modal"
+                                    data-target=".bs-example-modal-lg"
+                                    onclick="loadTimelineOrden('{{ orden.id }}','{{ orden.id }}','PO')"
+                                        style="background-color: {{ orden.status_orden_color }} !important;"> {{ orden.status_orden }}</span>
+                                </td>
+                                <td> {{ orden.cliente_factura|default:"N/A" }} </td>
+                                <td>
+                                    {% if orden.cliente_factura_fecha  %}
+                                         {{ orden.cliente_factura_fecha }}
+                                    {%else%}
+                                         N/A 
+                                    {%endif%}
+                                </td>
+                                <td>
+                                    {% if orden.cliente_pago_fecha %}
+                                        {{ orden.cliente_pago_fecha }}
+                                    {%else%}
+                                            N/A 
+                                    {%endif%}
+                                </td>
+                                <td> {{ orden.cliente_cantidad|default:"N/A" }} </td>
+                                <td>
+                                    {% if orden.factoraje_fecha_deposito  %}
+                                        {{ orden.factoraje_fecha_deposito }}
+                                    {%else%}
+                                            N/A 
+                                    {%endif%}                               
+                                </td>
+                                <td> {{ orden.factoraje_monto|default:"N/A" }} </td>
+                                <td> {{ orden.saldo|default:"N/A" }} </td>
+                                <td> 
+                                    {% if orden.fecha_pago %}
+                                        {{ orden.fecha_pago }} 
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td> {{ orden.monto_pago|default:"N/A" }} </td>
+                            {%else%}
+                                
+                                {% if filtro ==  2%}
+                                    <td> {{ orden.cliente_factura|default:"N/A" }} </td>
+                                    <td> {{ orden.cliente_factura_fecha | date:'M d, Y' |default:"N/A" }} </td>
+                                    <td> {{ orden.cliente_pago_fecha | date:'M d, Y'|default:"N/A" }}</td>
+                                {%else%}
+                                    <td class="text-center">
+                                        <span type="button" class="label label-rouded" data-toggle="modal"
+                                        data-target=".bs-example-modal-lg"
+                                        onclick="loadTimelineOrden('{{ orden.id }}','{{ orden.id }}')"
+                                            style="background-color: {{ orden.status_orden.color }} !important;"> {{ orden.status_orden.descripcion }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span type="button" class="label label-rouded" data-toggle="modal"
+                                        data-target=".bs-example-modal-lg"
+                                        onclick="loadTimelineOrden('{{ orden.id }}','{{ orden.id }}','PO')"
+                                            style="background-color: {{ orden.status_po.color }} !important;"> {{ orden.status_po.descripcion }}</span>
+                                    </td>
+                                    <td> {{ orden.proveedor.nombre }}</td>
+                                {% endif%}
+                                <td> {{ orden.get_shippdate }}</td>
+                                <td> {{ orden.cliente.nombre }}</td>
+                                <td> {{ orden.get_origin }}</td>
+                                <td> {{ orden.get_destination }}</td>
+                                {% comment %} <td> {{ orden.pro }}</td>
+                                <td> {{ orden.realase }}</td>
+                                <td> {{ orden.load }}</td> {% endcomment %}
+                                <td> {% if orden.eq_type %} {{ orden.get_eq_type_display }} {% endif %}</td>
+                                <td> {{ orden.get_name_register_by }}</td>
+
+                                {% comment %} <td> {{ orden.invoice }}</td>
+                                <td> {{ orden.lms }}</td> {% endcomment %}
+                            {% endif %}
+                            
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    {# Modal para la carga de el track log de cada orden  #}
+    <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+         aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><i class="ti-list ml-3"
+                                                                      style="font-size: 1.5rem"></i> Tracking Log Orden
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" id="form-new-tracking-log" onsubmit="saveNewTrackingLog(event)"
+                          class="floating-labels row mt-5">
+                        {% csrf_token %}
+                        <input type="hidden" id="orden_id" name="orden_id">
+                        <input type="hidden" id="type_status" name="type_status">
+                        <div class="col-lg-5 col-md-5 col-sm-5">
+                            <select class="form-control p-0" id="status"
+                                    name="status" required>
+                                <option></option>
+                                {% comment %} {% for option in status %}
+                                    <option value="{{ option.pk }}">{{ option.descripcion }}</option>
+                                {% endfor %} {% endcomment %}
+                                <option class="po" hidden value="1"> Open/ Abierto</option>
+                                <option class="po" hidden value="18"> Covered/ Cubierto</option>
+                                <option class="po" hidden value="16"> Completed/ Completado</option>
+                                {% if contabilidad %}
+                                    <option class="po" hidden value="19"> Billed/ Facturado</option>
+                                    <option class="po" hidden value="20"> Paid/ Pagado</option>
+                                {% endif %}
+                                <option class="embarque" hidden value="10"> Accident/Accidente</option>
+                                <option class="embarque" hidden value="12"> Arrival at delivery/Llegada a la entrega</option>
+                                <option class="embarque" hidden value="3"> Arrival for pickup/Llegada para recoger</option>
+                                <option class="embarque" hidden value="17"> Cancelled/Cancelado</option>
+                                <option class="embarque" hidden value="16"> Completed/Completado</option>
+                                <option class="embarque" hidden value="18"> Covered/Cubierto</option>
+                                <option class="embarque" hidden value="14"> Crossing/Cruce</option>
+                                <option class="embarque" hidden value="15"> Delivered/Entregado</option>
+                                <option class="embarque" hidden value="13"> Departure from delivery/Salida desde la entrega</option>
+                                <option class="embarque" hidden value="4"> Departure from pickup/Salida de recogida</option>
+                                <option class="embarque" hidden value="2"> Dispatched/Enviado</option>
+                                <option class="embarque" hidden value="11"> In Yard/En Yarda</option>
+                                <option class="embarque" hidden value="9"> Inspection/Inspeccion</option>
+                                <option class="embarque" hidden value="7"> On Route delayed border/ En ruta demora frontera</option>
+                                <option class="embarque" hidden value="6"> On Route delayed traffic/En Ruta demora trafico</option>
+                                <option class="embarque" hidden value="8"> On Route delayed weather/En ruta demora clima</option>
+                                <option class="embarque" hidden value="5"> On Route/En Ruta</option>
+
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="type_search"> Status (<b style="color: red">*</b>)</label>
+                        </div>
+                        <div class="col-lg-5 col-md-5 col-sm-5">
+                                <textarea class="form-control" id="descripcion"
+                                          name="descripcion" cols="1" rows="1"> </textarea>
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="descripcion"> Nota (s)</label>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-2">
+                            <button type="submit" class="btn btn-success"><i class="ti-plus"></i> Agregar</button>
+                        </div>
+                    </form>
+                    <ul class="timeline mt-3" id="timeline_orden">
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger waves-effect text-left" data-dismiss="modal">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    {# Fin Modal para la carga del track log de cada orden    #}
+{% endblock %}
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+            integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        $(document).ready(function () {
+
+            {% if contabilidad %}
+                console.log('entro aqui')
+                setTimeout(function (){
+                    $('#nav-order').removeAttr('class','active')
+                },100)
+            {% endif %}
+            $('#myTable').DataTable({
+                columnDefs: [{
+                    orderable: false,
+                    targets: [0]
+                }],
+                reponsive: true,
+                "pageLength": 50,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+        })
+
+
+        const deleteOrden = (name_orden, pk_orden) => {
+            Swal.fire({
+                title: '¡Peligro!',
+                text: '¿Deseas eliminar la orden: ' + name_orden,
+                type: 'warning',
+                confirmButtonText: 'Aceptar'
+            }).then((result) => {
+                console.log(result)
+                /* Read more about isConfirmed, isDenied below */
+                if (result.value) {
+                    $.ajax({
+                        url: '{% url 'catalogo:orden-delete' %}',
+                        type: 'POST',
+                        beforeSend: (xhr) => {
+                            xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                        },
+                        data: {
+                            orden: pk_orden
+                        },
+                        success: function (response) {
+                            {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                            {#Swal.fire({#}
+                            {#    title: '¡Éxito!',#}
+                            {#    text: response.message,#}
+                            {#    type: 'success',#}
+                            {#    confirmButtonText: 'Aceptar'#}
+                            {#s}).then((result) => {#}
+                            {#    console.log(result)#}
+                            {#    /* Read more about isConfirmed, isDenied below */#}
+                            {#    if (result.value) {#}
+                            window.location.reload()
+                            {#    }#}
+                            {#s})#}
+                        },
+                        error: (e) => {
+                            Swal.fire({
+                                title: '¡Error!',
+                                text: e.responseJSON.message,
+                                type: 'error',
+                                confirmButtonText: 'Intentar nuevamente'
+                            })
+                        }
+                    });
+                }
+            })
+        }
+
+        const loadTimelineOrden = (pk_orden, orden, clase = '') => {
+            {% comment %} Validaremos que clase es la que viene para remover los hidden y agregarselos a la otra clase {% endcomment %}
+            if(clase == 'PO'){
+                console.log('Entro en PO')
+                $('.po').removeAttr('hidden','hidden')
+                $('.embarque').attr('hidden','hidden')
+                {#Le asignamos el nombre de acuerdo a la orden al modal #}
+                $('#myLargeModalLabel').html(`
+                        <i class="ti-list ml-3" style="font-size: 1.5rem"></i> Tracking Log PO ORD-00${orden}
+                `)
+                {% comment %} Aqui asignaremos el tipo de status para asi cuando se realice el guardado se asigne al adeucado {% endcomment %}
+                $('#type_status').val('po')
+            }else{
+                $('.embarque').removeAttr('hidden','hidden')
+                $('.po').attr('hidden','hidden')
+                {#Le asignamos el nombre de acuerdo a la orden al modal #}
+                $('#myLargeModalLabel').html(`
+                        <i class="ti-list ml-3" style="font-size: 1.5rem"></i> Tracking Log SHIPMENT ORD-00${orden}
+                `)
+                $('#type_status').val('orden')
+
+            }
+            {# Asignamos el pk de la orden al input oculto    #}
+            $('#orden_id').val(pk_orden)
+            $.ajax({
+                url: '{% url 'catalogo:orden-tracking-log' %}',
+                type: 'GET',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: {
+                    orden_id: pk_orden,
+                    status: clase
+                },
+                success: function (response) {
+                    console.log(response)
+                    var div_timeline = $('#timeline_orden')
+                    div_timeline.html('')
+                    $.each(response.tracking, function (key, tracking) {
+                        if ((key % 2) === 0) {
+                            if (clase == 'PO'){
+                                div_timeline.append(`
+                                <li>
+                                    <div class="timeline-badge info"><i class="fa fa-truck"></i></div>
+                                    <div class="timeline-panel">
+                                        <div class="timeline-heading">
+                                            <h5 class="timeline-title" style="color: ${tracking.status_po.color};"> <b> ${tracking.status_po.descripcion}</b> </h5>
+                                            <p><small class="text-muted"><i class="fa fa-clock-o"></i> ${moment(tracking.created_at).format('LLL')}
+                                                creado por: <b>${tracking.register_by}</b> </small>
+                                            </p>
+                                        </div>
+                                        <div class="timeline-body">
+                                            <p> ${tracking.nota ? tracking.nota : ''}</p>
+                                        </div>
+                                    </div>
+                                </li>
+                            `)
+                            }else{
+                                div_timeline.append(`
+                                <li>
+                                    <div class="timeline-badge info"><i class="fa fa-truck"></i></div>
+                                    <div class="timeline-panel">
+                                        <div class="timeline-heading">
+                                            <h5 class="timeline-title" style="color: ${tracking.status_orden.color};"> <b> ${tracking.status_orden.descripcion}</b> </h5>
+                                            <p><small class="text-muted"><i class="fa fa-clock-o"></i> ${moment(tracking.created_at).format('LLL')}
+                                                creado por: <b>${tracking.register_by}</b> </small>
+                                            </p>
+                                        </div>
+                                        <div class="timeline-body">
+                                            <p> ${tracking.nota ? tracking.nota : ''}</p>
+                                        </div>
+                                    </div>
+                                </li>
+                            `)
+                            }
+                            
+                        } else {
+                            if (clase == 'PO'){
+                                div_timeline.append(`
+                                    <li class="timeline-inverted">
+                                    <div class="timeline-badge success"><i class="fa fa-truck"></i></div>
+                                    <div class="timeline-panel">
+                                        <div class="timeline-heading">
+                                            <h5 class="timeline-title" style="color: ${tracking.status_po.color};">${tracking.status_po.descripcion}</h5>
+                                                <p><small class="text-muted"><i class="fa fa-clock-o"></i> ${moment(tracking.created_at).format('LLL')}
+                                                    creado por: <b>${tracking.register_by}</b> </small>
+                                                </p></div>
+                                        <div class="timeline-body">
+                                                <p> ${tracking.nota ? tracking.nota : ''}</p>
+                                            </div>
+                                    </div>
+                                </li>
+                                `)
+                            }else{
+                                div_timeline.append(`
+                                <li class="timeline-inverted">
+                                <div class="timeline-badge success"><i class="fa fa-truck"></i></div>
+                                <div class="timeline-panel">
+                                    <div class="timeline-heading">
+                                        <h5 class="timeline-title" style="color: ${tracking.status_orden.color};">${tracking.status_orden.descripcion}</h5>
+                                            <p><small class="text-muted"><i class="fa fa-clock-o"></i> ${moment(tracking.created_at).format('LLL')}
+                                                creado por: <b>${tracking.register_by}</b> </small>
+                                            </p></div>
+                                    <div class="timeline-body">
+                                            <p> ${tracking.nota ? tracking.nota : ''}</p>
+                                        </div>
+                                </div>
+                            </li>
+                            `)
+                            }
+                        }
+                    });
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+        }
+
+
+        const saveNewTrackingLog = (e) => {
+            {# Detenemos el evento submit para realizar la petición ajax  #}
+            e.preventDefault()
+            $.ajax({
+                url: '{% url 'catalogo:orden-tracking-log' %}',
+                type: 'POST',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: $('#form-new-tracking-log').serialize(),
+                success: function (response) {
+                    {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                    {#Swal.fire({#}
+                    {#    title: '¡Éxito!',#}
+                    {#    text: response.message,#}
+                    {#    type: 'success',#}
+                    {#    confirmButtonText: 'Aceptar'#}
+                    {#s}).then((result) => {#}
+                    {#    console.log(result)#}
+                    {#    /* Read more about isConfirmed, isDenied below */#}
+                    {#    if (result.value) {#}
+                    window.location.reload()
+                    {#    }#}
+                    {#s})#}
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+        }
+
+
+        const redirectFilter = (value = '') => {       
+          
+            {% if contabilidad %}
+                if (value){
+                    window.location.href = `{% url "catalogo:ordenes-list-contable" %}?ordenes=${value}`
+                }else {
+                    window.location.href = `{% url "catalogo:ordenes-list-contable" %}?all=True`
+                }
+            {%else%}
+            
+            if (value == ''){
+                window.location.href = '{% url "catalogo:ordenes-list" %}'
+              }else {
+                console.log(value)
+                window.location.href = `{% url "catalogo:ordenes-list" %}?ordenes=${value}`
+              }
+            {% endif %}
+        }
+
+
+        const redirectFilterExport = (value = '') => {
+            if(value){
+                window.location.href = `{% url "catalogo:reporte-contabilidad-exportar" %}?ordenes=${value}`
+            }else{
+                window.location.href = '{% url "catalogo:reporte-contabilidad-exportar" %}'
+            }
+        }
+    </script>
+{% endblock %}

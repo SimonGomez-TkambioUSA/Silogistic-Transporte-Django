@@ -1,0 +1,1562 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/footable/css/footable.core.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/plugins/bower_components/bootstrap-select/bootstrap-select.min.css' %}"
+          rel="stylesheet"/>
+    <style>
+        b {
+            color: red;
+        }
+
+        .floating-labels .form-control {
+            font-size: 14px !important;
+        }
+
+        .floating-labels label {
+            font-size: 14px !important;
+        }
+
+        .footable-row-detail-inner {
+            width: 100% !important;
+        }
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">LISTADO</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Catalogos</li>
+                <li>Ordenes</li>
+                <li class="active">{% if edicion %} Editar {% else %} Nueva {% endif %}</li>
+                {% if edicion %}
+                    <li class="active"> ORD-00{{ orden.pk }}</li>
+                {% endif %}
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row">
+
+        <div class="col-lg-12 text-right">
+            <!-- Nav tabs -->
+            <ul class="nav customtab nav-tabs" role="tablist">
+                <li role="presentation" class="nav-item"><a href="#informacion_general" class="nav-link active"
+                                                            onclick="changeButtonSaveSearch(false)"
+                                                            aria-controls="informacion"
+                                                            role="tab" data-toggle="tab" aria-expanded="true"><span
+                        class="visible-xs"><i class="ti-home"></i></span><span
+                        class="hidden-xs"> Información General</span></a>
+                </li>
+                <li role="presentation" class="nav-item"><a href="#adicionales" class="nav-link"
+                                                            onclick="changeButtonSaveSearch(false)"
+                                                            aria-controls="adicionales"
+                                                            role="tab" data-toggle="tab" aria-expanded="false"><span
+                        class="visible-xs"><i class="ti-user"></i></span> <span
+                        class="hidden-xs"> Adicionales</span></a>
+                </li>
+                <li role="presentation" class="nav-item"><a href="#facturacion" class="nav-link"
+                                                            onclick="changeButtonSaveSearch(false)"
+                                                            aria-controls="adicionales"
+                                                            role="tab" data-toggle="tab" aria-expanded="false"><span
+                        class="visible-xs"><i class="ti-user"></i></span> <span
+                        class="hidden-xs"> Contabilidad</span></a>
+                </li>
+                {% comment %} {% if not edicion %}
+                    <li role="presentation" class="nav-item"><a href="#historial" class="nav-link"
+                                                                onclick="changeButtonSaveSearch(true)"
+                                                                aria-controls="historial"
+                                                                role="tab" data-toggle="tab" aria-expanded="false"><span
+                            class="visible-xs"><i class="ti-user"></i></span> <span
+                            class="hidden-xs"> Historial Órdenes </span></a>
+                    </li>
+                {% endif %} {% endcomment %}
+
+            </ul>
+            <!-- Tab panes -->
+        </div>
+        <form action="post" class="col-lg-12 row" id="form-new-orden" onsubmit="SaveNewOrden(event)">
+            {% csrf_token %}
+            <input type="hidden" id="points" name="points">
+            <div class="tab-content col-lg-12">
+                <div role="tabpanel" class="tab-pane fade active in" id="informacion_general">
+                    <div class="floating-labels row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-5"><h3>Formulario general</h3></div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <select class="form-control p-0" id="cliente_orden" name="cliente_orden" required>
+                                <option></option>
+                                {% for cliente in clientes %}
+                                    {% if orden.cliente_id == cliente.pk %}
+                                        <option value="{{ cliente.pk }}" selected> {{ cliente.nombre }}
+                                            / {{ cliente.nombre_corto }}</option>
+                                    {% else %}
+                                        <option value="{{ cliente.pk }}"> {{ cliente.nombre }}
+                                            / {{ cliente.nombre_corto }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="cliente_orden"> Cliente (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                   class="form-control" id="costo_cliente_orden" name="costo_cliente_orden"
+                                    {% if orden.costo_cliente %} value="{{ orden.costo_cliente }}" {% endif %}
+                                   required><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="costo_cliente_orden"> Costo Cliente (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                    {% if orden.costo_adicional_cliente %}
+                                   value="{{ orden.costo_adicional_cliente }}" {% endif %}
+                                   class="form-control" id="costo_adicional_cliente_orden"
+                                   name="costo_adicional_cliente_orden"
+                            ><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="costo_adicional_cliente_orden"> Costo Adicional</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <input type="text"
+                                   class="form-control" id="wo_orden"
+                                   name="wo_orden"  {% if orden.wo %} value="{{ orden.wo }}" {% endif %}
+                            ><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="wo_orden"> W/O</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <select class="form-control p-0" id="proveedor_orden" name="proveedor_orden" required>
+                                <option></option>
+                                {% for proveedor in proveedores %}
+                                    {% if orden.proveedor_id == proveedor.pk %}
+                                        <option value="{{ proveedor.pk }}" selected> {{ proveedor.nombre }}
+                                            / {{ proveedor.nombre_corto }}</option>
+                                    {% else %}
+                                        <option value="{{ proveedor.pk }}"> {{ proveedor.nombre }}
+                                            / {{ proveedor.nombre_corto }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="proveedor_orden"> Proveedor (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-2 form-group ">
+                            <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                   class="form-control" id="costo_proveedor_orden" name="costo_proveedor_orden"
+                                    {% if orden.costo_proveedor %} value="{{ orden.costo_proveedor }}" {% endif %}
+                                   required><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="costo_proveedor_orden"> Costo Proveedor (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                   class="form-control" id="costo_adicional_proveedor_orden"
+                                    {% if orden.costo_adicional_proveedor %}
+                                   value="{{ orden.costo_adicional_proveedor }}" {% endif %}
+                                   name="costo_adicional_proveedor_orden"><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="costo_adicional_proveedor_orden"> Costo Adicional</label>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-2 form-group ">
+                            <select class="form-control p-0" id="eq_type_orden" name="eq_type_orden" required>
+                                <option></option>
+                                <option value="1"  {% if orden.eq_type == 1 %} selected {% endif %}>22' VAN</option>
+                                <option value="2"  {% if orden.eq_type == 2 %} selected {% endif %} >48' DRY VAN
+                                </option>
+                                <option value="3"  {% if orden.eq_type == 3 %} selected {% endif %} >48' REEFER</option>
+                                <option value="4"  {% if orden.eq_type == 4 %} selected {% endif %} >53' DRY VAN
+                                </option>
+                                <option value="5"  {% if orden.eq_type == 5 %} selected {% endif %} > 53' REEFER
+                                </option>
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="eq_type_orden"> EQ Type (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-2 form-group ">
+                            <select class="form-control p-0" id="tipo_cambio_orden" name="tipo_cambio_orden"
+                                    required>
+                                <option></option>
+                                <option value="1"  {% if orden.tipo_cambio == 1 %} selected {% endif %}>USD</option>
+                                <option value="2"  {% if orden.tipo_cambio == 2 %} selected {% endif %}>MX</option>
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="tipo_cambio_orden"> Tipo Moneda (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <input type="text"
+                                   class="form-control" id="direccion_origen"
+                                   name="direccion_origen"  {% if orden.direccion_origen %}
+                                   value="{{ orden.direccion_origen }}" {% endif %}
+                                   required><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="wo_orden"> Dirección Origen (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <input type="text"
+                                   class="form-control" id="direccion_destino"
+                                   name="direccion_destino"  {% if orden.direccion_destino %}
+                                   value="{{ orden.direccion_destino }}" {% endif %}
+                                   required><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="wo_orden"> Dirección Destino (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            <input type="datetime-local"
+                                   class="form-control" id="fecha_orden"
+                                   name="fecha_orden"  {% if orden.created_at %}
+                                   value="{{ orden.created_at|date:'Y-m-d' }}T{{ orden.created_at|date:'H:m' }}" {% else %}
+                                   value="{% now 'Y-m-d' %}T{% now 'H:m' %}" {% endif %}
+                                   required><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="wo_orden"> Fecha Orden (<b>*</b>)</label>
+                        </div>
+
+                        <div class="col-lg-12 col-md-12 col-sm-12 text-right">
+                            <button type="button" class="btn btn-success" data-toggle="modal"
+                                    data-target=".bs-example-modal-lg" onclick="VaciarCampos()"> Nuevo Point <i
+                                    class="ti-plus ml-3"
+                                    style="font-size: 1.5rem"></i>
+                            </button>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12 mt-5">
+                            <div class="table-responsive">
+                                <table id="myTable" class="table toggle-circle table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th data-toggle="true">Item</th>
+                                        <th>Tipo</th>
+                                        <th>Cantidad</th>
+                                        <th>Peso</th>
+                                        <th>Precio</th>
+                                        <th>Número de Orden</th>
+                                        <th data-hide="all"></th>
+                                        <th data-hide="all"></th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="body_points">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="adicionales">
+                    <div class="floating-labels row">
+                        <div class="col-lg-12 col-md-12 col-sm-12 text-center mb-5"><h3>Formulario Adicional</h3></div>
+                        <div class="col-lg-5 col-md-5 col-sm-5 mb-5" style="border-bottom: 1px solid;"></div>
+                        <div class="col-lg-2 col-md-2 col-sm-2 mb-5 text-center" style="border-bottom: 1px solid ;"><h3>
+                            Mexico</h3></div>
+                        <div class="col-lg-5 col-md-5 col-sm-5 mb-5" style="border-bottom: 1px solid;"></div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="adicional_pedimento" {% if orden.pedimento %}
+                                   value="{{ orden.pedimento }}" {% endif %}
+                                   name="adicional_pedimento"><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_pedimento"> Pedimento</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="adicional_pro"  {% if orden.pro %}
+                                   value="{{ orden.pro }}" {% endif %}
+                                   name="adicional_pro"><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_pro"> Pro</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="adicional_load"  {% if orden.load %}
+                                   value="{{ orden.load }}" {% endif %}
+                                   name="adicional_load"><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_load"> Carga </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="adicional_mx_truck_num"  {% if orden.mx_truck_num %}
+                                   value="{{ orden.mx_truck_num }}" {% endif %}
+                                   name="adicional_mx_truck_num"><span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_mx_truck_num"> Número de Camión MX</label>
+                        </div>
+
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <select class="form-control p-0" id="adicional_load_type" name="adicional_load_type">
+                                <option value=""> Seleccione una opción</option>
+                                <option value="1"  {% if orden.load_type == 1 %} selected {% endif %}>Normal</option>
+                                <option value="2"  {% if orden.load_type == 2 %} selected {% endif %}>Extra</option>
+                                <option value="3"  {% if orden.load_type == 3 %} selected {% endif %}>Exportación
+                                </option>
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="adicional_load_type"> Tipo de Carga</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_mx_plate_num"  {% if orden.mx_plate_num %}
+                                   value="{{ orden.mx_plate_num }}" {% endif %}
+                                   name="adicional_mx_plate_num">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_mx_plate_num"> Número de Placa MX</label>
+                        </div>
+
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_realase"  {% if orden.realase %}
+                                   value="{{ orden.realase }}" {% endif %}
+                                   name="adicional_realase">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_realase"> Realase </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_mx_driver_one"  {% if orden.mx_driver_one %}
+                                   value="{{ orden.mx_driver_one }}" {% endif %}
+                                   name="adicional_mx_driver_one">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_mx_driver_one"> Conductor 1 MX</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_vin"  {% if orden.vin %}
+                                   value="{{ orden.vin }}" {% endif %}
+                                   name="adicional_vin">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_vin"> Número de Chasis </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_lms"  {% if orden.lms %}
+                                   value="{{ orden.lms }}" {% endif %}
+                                   name="adicional_lms">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_lms"> Lms </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_mx_driver_two"  {% if orden.mx_driver_two %}
+                                   value="{{ orden.mx_driver_two }}" {% endif %}
+                                   name="adicional_mx_driver_two">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_mx_driver_two"> Conductor 2 MX</label>
+                        </div>
+
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_invoice"  {% if orden.invoice %}
+                                   value="{{ orden.invoice }}" {% endif %}
+                                   name="adicional_invoice">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_invoice"> Factura </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_mx_driver_phone_one"
+                                    {% if orden.mx_driver_phone_one %}
+                                   value="{{ orden.mx_driver_phone_one }}" {% endif %}
+                                   name="adicional_mx_driver_phone_one">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_mx_driver_phone_one"> Telefono del Conductor MX</label>
+                        </div>
+
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="date"
+                                   class="form-control" id="adicional_invoice_date"  {% if orden.invoice_date %}
+                                   value="{{ orden.invoice_date | date:'Y-m-d' }}" {% endif %}
+                                   name="adicional_invoice_date">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_invoice_date"> Fecha de la Factura </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_empty_truck"  {% if orden.empty_truck %}
+                                   value="{{ orden.empty_truck }}" {% endif %}
+                                   name="adicional_empty_truck">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_empty_truck"> Camión Vacio</label>
+                        </div>
+
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="date"
+                                   class="form-control" id="adicional_notif_docs"  {% if orden.notif_docs %}
+                                   value="{{ orden.notif_docs | date:'Y-m-d' }}" {% endif %}
+                                   name="adicional_notif_docs">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_notif_docs"> Notif Docs </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_cma"  {% if orden.cma %}
+                                   value="{{ orden.cma }}" {% endif %}
+                                   name="adicional_cma">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_cma"> CMA </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_maniobras"  {% if orden.maniobras %}
+                                   value="{{ orden.maniobras }}" {% endif %}
+                                   name="adicional_maniobras">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_maniobras"> Maniobras</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_estancias"  {% if orden.estancias %}
+                                   value="{{ orden.estancias }}" {% endif %}
+                                   name="adicional_estancias">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_estancias"> Estancias</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_otros"  {% if orden.otros %}
+                                   value="{{ orden.otros }}" {% endif %}
+                                   name="adicional_otros">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_otros"> Otros</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="date"
+                                   class="form-control" id="adicional_arrival"  {% if orden.arrival %}
+                                   value="{{ orden.arrival | date:'Y-m-d' }}" {% endif %}
+                                   name="adicional_arrival">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_arrival"> Llegada </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_loading_time"  {% if orden.loading_time %}
+                                   value="{{ orden.loading_time }}" {% endif %}
+                                   name="adicional_loading_time">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_loading_time"> Tiempo de carga </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_waiting"  {% if orden.waiting %}
+                                   value="{{ orden.waiting }}" {% endif %}
+                                   name="adicional_waiting">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_waiting"> Esperando</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_crossing_time"  {% if orden.crossing_time %}
+                                   value="{{ orden.crossing_time }}" {% endif %}
+                                   name="adicional_crossing_time">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_crossing_time"> Tiempo de Cruce </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_serie"  {% if orden.serie %}
+                                   value="{{ orden.serie }}" {% endif %}
+                                   name="adicional_serie">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_serie"> Serie</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_folio"  {% if orden.folio %}
+                                   value="{{ orden.folio }}" {% endif %}
+                                   name="adicional_folio">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_folio"> Folio</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_uuid"  {% if orden.uuid %}
+                                   value="{{ orden.uuid }}" {% endif %}
+                                   name="adicional_uuid">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> UUID</label>
+                        </div>
+                        <hr class="col-lg-12 col-md-12 col-sm-12">
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="esj_po"  {% if orden.esj_po %}
+                                   value="{{ orden.esj_po }}" {% endif %}
+                                   name="esj_po">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> ESJ PO </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="flatbed"  {% if orden.flatbed %}
+                                   value="{{ orden.flatbed }}" {% endif %}
+                                   name="flatbed">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Flatbed </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="carrier_mx"  {% if orden.carrier_mx %}
+                                   value="{{ orden.carrier_mx }}" {% endif %}
+                                   name="carrier_mx">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Carrier MX </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="datetime-local"
+                                   class="form-control" id="loading_warehouse"  {% if orden.loading_warehouse %}
+                                   value="{{ orden.loading_warehouse|date:'Y-m-d' }}T{{ orden.loading_warehouse|date:'h:i' }}" {% endif %}
+                                   name="loading_warehouse">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Loading From Warehouse </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="datetime-local"
+                                   class="form-control" id="departure_esj"  {% if orden.departure_esj %}
+                                   value="{{ orden.departure_esj|date:'Y-m-d' }}T{{ orden.departure_esj|date:'h:i' }}" {% endif %}
+                                   name="departure_esj">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Departura ESJ </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="datetime-local"
+                                   class="form-control" id="arrival_juarez"  {% if orden.arrival_juarez %}
+                                   value="{{ orden.arrival_juarez|date:'Y-m-d' }}T{{ orden.arrival_juarez|date:'h:i' }}" {% endif %}
+                                   name="arrival_juarez">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Arriba a Juarez </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="datetime-local"
+                                   class="form-control" id="arrival_el_paso"  {% if orden.arrival_el_paso %}
+                                   value="{{ orden.arrival_el_paso|date:'Y-m-d' }}T{{ orden.arrival_el_paso|date:'h:i' }}" {% endif %}
+                                   name="arrival_el_paso">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Arriba a El Paso </label>
+                        </div>
+                        <div class="col-lg-5 col-md-5 col-sm-5 mb-5" style="border-bottom: 1px solid;"></div>
+                        <div class="col-lg-2 col-md-2 col-sm-2 mb-5 text-center" style="border-bottom: 1px solid ;"><h3>
+                            USA </h3></div>
+                        <div class="col-lg-5 col-md-5 col-sm-5 mb-5" style="border-bottom: 1px solid;"></div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_us_truck_num"  {% if orden.us_truck_num %}
+                                   value="{{ orden.us_truck_num }}" {% endif %}
+                                   name="adicional_us_truck_num">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_us_truck_num"> Número de Camión US</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_us_plate_num"  {% if orden.us_plate_num %}
+                                   value="{{ orden.us_plate_num }}" {% endif %}
+                                   name="adicional_us_plate_num">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_us_plate_num"> Número de Placa US</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_us_driver_phone_one"
+                                    {% if orden.us_driver_phone_one %}
+                                   value="{{ orden.us_driver_phone_one }}" {% endif %}
+                                   name="adicional_us_driver_phone_one">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_us_driver_phone_one"> Telefono del Conductor US</label>
+                        </div>
+
+
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_us_driver_one"  {% if orden.us_driver_one %}
+                                   value="{{ orden.us_driver_one }}" {% endif %}
+                                   name="adicional_us_driver_one">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_us_driver_one"> Conductor 1 US</label>
+                        </div>
+
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_us_driver_phone_one"
+                                    {% if orden.us_driver_phone_one %}
+                                   value="{{ orden.us_driver_phone_one }}" {% endif %}
+                                   name="adicional_us_driver_phone_one">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_us_driver_phone_one"> Telefono del Conductor US</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="adicional_us_driver_phone_one"
+                                    {% if orden.us_driver_phone_one %}
+                                   value="{{ orden.us_driver_phone_one }}" {% endif %}
+                                   name="adicional_us_driver_phone_one">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_us_driver_phone_one"> Telefono del Conductor US</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="datetime-local"
+                                   class="form-control" id="departure_usa"  {% if orden.departure_usa %}
+                                   value="{{ orden.departure_usa|date:'Y-m-d' }}T{{ orden.departure_usa|date:'h:i' }}" {% endif %}
+                                   name="departure_usa">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Departure USA </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="datetime-local"
+                                   class="form-control" id="arrival_destination"  {% if orden.arrival_destination %}
+                                   value="{{ orden.arrival_destination|date:'Y-m-d' }}T{{ orden.arrival_destination|date:'h:i' }}" {% endif %}
+                                   name="arrival_destination">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Arrival To Destination </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="carrier_usa"  {% if orden.carrier_usa %}
+                                   value="{{ orden.carrier_usa }}" {% endif %}
+                                   name="carrier_usa">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="adicional_uuid"> Carrier USA </label>
+                        </div>
+
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="historial">
+                    <div class="floating-labels row">
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <select class="form-control p-0" id="type_search" onchange="showDivs(this.value)"
+                                    name="type_search">
+                                <option value=""> Seleccione una opción</option>
+                                <option value="1">Cliente</option>
+                                <option value="2">Proveedor</option>
+                                <option value="3">Fecha(s)</option>
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="type_search"> Filtro de Búsqueda</label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4" id="cliente" hidden>
+                            <select class="form-control p-0" id="cliente_search" name="cliente_search">
+                                <option></option>
+                                {% for cliente in clientes %}
+                                    <option value="{{ cliente.pk }}"> {{ cliente.nombre }}
+                                        / {{ cliente.nombre_corto }}</option>
+                                {% endfor %}
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="cliente_search"> Cliente: (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4" id="proveedor" hidden>
+                            <select class="form-control p-0" id="proveedor_search" name="proveedor_search">
+                                <option></option>
+                                {% for proveedor in proveedores %}
+                                    <option value="{{ proveedor.pk }}"> {{ proveedor.nombre }}
+                                        / {{ proveedor.nombre_corto }}</option>
+                                {% endfor %}
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="proveedor_search"> Proveedor: (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4 fechas" hidden>
+                            <input type="date"
+                                   class="form-control" id="fecha_inicio_search"
+                                   name="fecha_inicio_search">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="fecha_inicio_search"> Fecha Inicio (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4 fechas" hidden>
+                            <input type="date"
+                                   class="form-control" id="fecha_fin_search"
+                                   name="fecha_fin_search">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="fecha_fin_search"> Fecha Inicio (<b>*</b>)</label>
+                        </div>
+                        <div class="col-lg-12 col-md-12 col-sm-12" id="table_informacion"></div>
+                    </div>
+                </div>
+                <div role="tabpanel" class="tab-pane fade" id="facturacion">
+                    <div class="floating-labels row" style="border-top: 1px solid; padding-top: 3rem;">
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="cliente_factura"
+                                    {% if orden.cliente_factura %} value="{{ orden.cliente_factura }}" {% endif %}
+                                   name="cliente_factura">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="cliente_factura"> Factura SIGO</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="date"
+                                   class="form-control" id="cliente_factura_fecha"
+                                    {% if orden.cliente_factura_fecha %}
+                                   value="{{ orden.cliente_factura_fecha | date:'Y-m-d' }}" {% endif %}
+                                   name="cliente_factura_fecha">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="cliente_factura_fecha"> Fecha Factura SIGO</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="date"
+                                   class="form-control" id="cliente_pago_fecha"
+                                    {% if orden.cliente_pago_fecha %}
+                                   value="{{ orden.cliente_pago_fecha | date:'Y-m-d' }}" {% endif %}
+
+                                   name="cliente_pago_fecha">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="cliente_pago_fecha"> Fecha Pago SIGO</label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="cliente_iva_retenido"
+                                    {% if orden.cliente_iva_retenido %} value="{{ orden.cliente_iva_retenido }}" {% endif %}
+                                   name="cliente_iva_retenido">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="cliente_iva_retenido"> IVA Retenido Factura SIGO </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="cliente_iva_trasladado"
+                                    {% if orden.cliente_iva_trasladado %} value="{{ orden.cliente_iva_trasladado }}" {% endif %}
+                                   name="cliente_iva_trasladado">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="cliente_iva_trasladado"> IVA Trasladado Factura SIGO </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="cliente_subtotal_monto"
+                                    {% if orden.cliente_subtotal_monto %} value="{{ orden.cliente_subtotal_monto }}" {% endif %}
+                                   name="cliente_subtotal_monto">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="cliente_subtotal_monto"> Subtotal Factura SIGO </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <input type="text"
+                                   class="form-control" id="cliente_cantidad"
+                                    {% if orden.cliente_cantidad %} value="{{ orden.cliente_cantidad }}" {% endif %}
+                                   name="cliente_cantidad">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="cliente_cantidad"> Monto Factura SIGO </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <select class="form-control p-0" id="cliente_tipo_cambio" name="cliente_tipo_cambio">
+                                <option></option>
+                                <option value="1"  {% if orden.cliente_tipo_cambio == 1 %} selected {% endif %}>USD</option>
+                                <option value="2"  {% if orden.cliente_tipo_cambio == 2 %} selected {% endif %}>MX</option>
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="cliente_tipo_cambio"> Tipo Moneda SIGO (<b>*</b>)</label>
+                        </div>
+                    </div>
+                    <div class="floating-labels row" style="border-top: 1px solid; margin-top: 2rem;padding-top: 3rem;">
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <input type="date"
+                                   class="form-control" id="factoraje_fecha_deposito"
+                                    {% if orden.factoraje_fecha_deposito %}
+                                   value="{{ orden.factoraje_fecha_deposito | date:'Y-m-d' }}" {% endif %}
+
+                                   name="factoraje_fecha_deposito">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="factoraje_fecha_deposito"> Fecha Deposito</label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <input type="text"
+                                   class="form-control" id="factoraje_monto"
+                                    {% if orden.factoraje_monto %} value="{{ orden.factoraje_monto }}" {% endif %}
+                                   name="factoraje_monto">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="factoraje_monto"> Monto </label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <input type="text"
+                                   class="form-control" id="saldo"
+                                    {% if orden.saldo %} value="{{ orden.saldo }}" {% endif %}
+                                   name="saldo">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="saldo"> Saldo </label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4 mt-5">
+                            <input type="date"
+                                   class="form-control" id="fecha_pago"
+                                    {% if orden.fecha_pago %} value="{{ orden.fecha_pago | date:'Y-m-d' }}" {% endif %}
+
+                                   name="fecha_pago">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="fecha_pago"> Fecha Pago </label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4 mt-5">
+                            <input type="text"
+                                   class="form-control" id="monto_pago"
+                                    {% if orden.monto_pago %} value="{{ orden.monto_pago }}" {% endif %}
+                                   name="monto_pago">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="monto_pago"> Monto Pago </label>
+                        </div>
+                    </div>
+
+                    <div class="floating-labels row" style="border-top: 1px solid; margin-top: 2rem;padding-top: 3rem;">
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <input type="date"
+                                   class="form-control" id="pago_factoraje_fecha"
+                                    {% if orden.pago_factoraje_fecha %}
+                                   value="{{ orden.pago_factoraje_fecha | date:'Y-m-d' }}" {% endif %}
+
+                                   name="pago_factoraje_fecha">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="pago_factoraje_fecha"> Fecha Factoraje</label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <input type="text"
+                                   class="form-control" id="pago_factoraje_referencia"
+                                    {% if orden.pago_factoraje_referencia %}
+                                   value="{{ orden.pago_factoraje_referencia }}" {% endif %}
+                                   name="pago_factoraje_referencia">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="pago_factoraje_referencia"> Referencia Factoraje </label>
+                        </div>
+                        <div class="col-lg-4 col-md-4 col-sm-4">
+                            <input type="text"
+                                   class="form-control" id="pago_factoraje_monto"
+                                    {% if orden.pago_factoraje_monto %}
+                                   value="{{ orden.pago_factoraje_monto }}" {% endif %}
+                                   name="pago_factoraje_monto">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="pago_factoraje_monto"> Monto Factoraje </label>
+                        </div>
+                    </div>
+                    <div class="floating-labels row" style="border-top: 1px solid; margin-top: 2rem;padding-top: 3rem;">
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="proovedor_factura"
+                                    {% if orden.proovedor_factura %} value="{{ orden.proovedor_factura }}" {% endif %}
+
+                                   name="proovedor_factura">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="proovedor_factura"> Factura Proveedor </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="proovedor_monto"
+                                    {% if orden.proovedor_monto %} value="{{ orden.proovedor_monto }}" {% endif %}
+                                   name="proovedor_monto">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="proovedor_monto"> Monto Factura </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="date"
+                                   class="form-control" id="proveedor_pago_fecha"
+                                    {% if orden.proveedor_pago_fecha %}
+                                   value="{{ orden.proveedor_pago_fecha | date:'Y-m-d' }}" {% endif %}
+
+                                   name="proveedor_pago_fecha">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="proveedor_pago_fecha"> Fecha Pago </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3">
+                            <input type="text"
+                                   class="form-control" id="proveedor_pago_monto"
+                                    {% if orden.proveedor_pago_monto %}
+                                   value="{{ orden.proveedor_pago_monto }}" {% endif %}
+                                   name="proveedor_pago_monto">
+                            <span class="highlight"></span>
+                            <span class="bar"></span>
+                            <label for="proveedor_pago_monto"> Monto Pago </label>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-sm-3 mt-5">
+                            <select class="form-control p-0" id="proveedor_tipo_cambio" name="proveedor_tipo_cambio">
+                                <option></option>
+                                <option value="1"  {% if orden.proveedor_tipo_cambio == 1 %} selected {% endif %}>USD</option>
+                                <option value="2"  {% if orden.proveedor_tipo_cambio == 2 %} selected {% endif %}>MX</option>
+                            </select><span class="highlight"></span> <span class="bar"></span>
+                            <label for="proveedor_tipo_cambio"> Tipo Moneda Proveedor (<b>*</b>)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-12 text-center mt-5">
+                <div class="button-box">
+                    <button class="btn btn-danger" onclick="window.history.back()"> Cancelar <i class="ti-close ml-3"
+                                                                                                style="font-size: 1.5rem"></i>
+                    </button>
+
+                    <button type="submit" id="btnSave" class="btn btn-success"> {% if not edicion %} Guardar
+                        <i class="ti-save ml-3" style="font-size: 1.5rem"></i> {% else %} Editar
+                        <i class="fa fa-edit ml-3" style="font-size: 1.5rem"></i> {% endif %}   </button>
+
+                    <button type="button" id="btnSearch" hidden onclick="searchOrden()" class="btn btn-success"> Buscar
+                        <i class="ti-search ml-3"
+                           style="font-size: 1.5rem"></i></button>
+                </div>
+            </div>
+        </form>
+
+    </div>
+
+
+    <!--- Modal crear nuevo shipper -->
+    <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+         aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><i class="ti-bag ml-3"
+                                                                      style="font-size: 1.5rem"></i> Nuevo Point
+                    </h4>
+                </div>
+                <form class="floating-labels" id="form-new-shipper" style="font-size: 15px !important;"
+                      onsubmit="SaveNewPoint(event)">
+                    <div class="modal-body">
+                        <h4 class="text-center"> Datos para el point</h4>
+                        <input type="hidden" id="pk_point">
+                        {% csrf_token %}
+                        <div class="row mt-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4 form-group ">
+                                <select class="form-control p-0" id="producto_point" name="producto_point" required>
+                                    <option></option>
+                                    {% for producto in productos %}
+                                        <option value="{{ producto.pk }}"
+                                                data-nombre="{{ producto.nombre }}"> {{ producto.nombre }}
+                                            / {{ producto.nombre_corto }}</option>
+                                    {% endfor %}
+                                </select><span class="highlight"></span> <span class="bar"></span>
+                                <label for="producto_point"> Producto (<b>*</b>)</label>
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2 form-group ">
+                                <select class="form-control p-0" id="tipo_point" name="tipo_point" required>
+                                    <option></option>
+                                    <option value="1" data-tipo="TL">TL</option>
+                                    <option value="2" data-tipo="LTL">LTL</option>
+                                    <option value="3" data-tipo="PALLETS">PALLETS</option>
+                                    <option value="4" data-tipo="BAGS">BAGS</option>
+                                </select><span class="highlight"></span> <span class="bar"></span>
+                                <label for="tipo_point"> Tipo (<b>*</b>)</label>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                                <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                       class="form-control" id="qty_point" name="qty_point"><span
+                                    class="highlight"></span>
+                                <span class="bar"></span>
+                                <label for="qty_point"> Cantidad </label>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                                <input type="text"
+                                       class="form-control" id="weight_point" name="weight_point"
+                                ><span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label for="weight_point"> Peso </label>
+                            </div>
+                            {#                            <div class="col-lg-2 col-md-2 col-sm-2 form-group ">#}
+                            {#                                <input type="text" onkeypress='return event.charCode >= 48 && event.charCode <= 57'#}
+                            {#                                       class="form-control" id="precio_point" name="precio_point"#}
+                            {#                                ><span class="highlight"></span>#}
+                            {#                                <span class="bar"></span>#}
+                            {#                                <label for="precio_point"> Precio</label>#}
+                            {#                            </div>#}
+                            <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            </div>
+                            <div class="col-lg-6 col-md-6 col-sm-6 form-group ">
+                                <input type="text"
+                                       class="form-control" id="po_numbers_point" name="po_numbers_point"
+                                ><span class="highlight"></span>
+                                <span class="bar"></span>
+                                <label for="po_numbers_point"> Número de Orden </label>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3 form-group ">
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5 row">
+                                <div class="col-lg-12 mb-5">
+                                    <h5 for="shipper_point" style="color: #ab8ce4;font-weight: 500;"> Shipper (<b>*</b>)
+                                    </h5>
+                                    <select class="form-control selectpicker p-0" id="shipper_point"
+                                            name="shipper_point" multiple="multiple" required>
+                                        {% for shipper in shippers %}
+                                            <option value="{{ shipper.pk }}&{{ shipper.nombre }}"
+                                                    data-nombre="{{ shipper.nombre }}"> {{ shipper.nombre }}</option>
+                                        {% endfor %}
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                </div>
+                                <div class="col-lg-12 mb-5">
+                                    <input type="datetime-local"
+                                           class="form-control" id="date_shipper_point"
+                                           value="{% now 'Y-m-d' %}T{% now 'H:m' %}" name="date_shipper_point" required><span
+                                        class="highlight"></span>
+                                    <span class="bar"></span>
+                                    <label for="date_shipper_point"> Fecha Envio (<b>*</b>)</label>
+                                </div>
+                                <div class="col-lg-12">
+                                    <textarea class="form-control" rows="4" id="shipping_notes_point"
+                                              name="shipping_notes_point"></textarea><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="shipping_notes_point"> Notas de envio </label>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2 text-center">
+                                <i class="ti-truck" style="font-size: 3em"></i> <br class="mb-5">
+                                <i class="ti-arrow-right mt-5" style="font-size: 2em"></i>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5 row">
+                                <div class="col-lg-12 mb-5">
+                                    <h5 for="delivery_point" style="color: #ab8ce4;font-weight: 500;"> Delivery
+                                        (<b>*</b>)</h5>
+                                    <select class="form-control selectpicker p-0" id="delivery_point"
+                                            name="delivery_point"
+                                            multiple="multiple" required>
+                                        {% for delivery in deliverys %}
+                                            <option value="{{ delivery.pk }}&{{ delivery.nombre }}"
+                                                    data-nombre="{{ delivery.nombre }}"> {{ delivery.nombre }}</option>
+                                        {% endfor %}
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                </div>
+                                <div class="col-lg-12 mb-5">
+                                    <input type="datetime-local"
+                                           class="form-control" id="date_delivery_point"
+                                           value="{% now 'Y-m-d' %}T{% now 'H:m' %}" name="date_delivery_point"
+                                           required><span class="highlight"></span>
+                                    <span class="bar"></span>
+                                    <label for="date_delivery_point"> Fecha Entrega (<b>*</b>)</label>
+                                </div>
+                                <div class="col-lg-12">
+                                    <textarea class="form-control" rows="4" id="delivery_notes_point"
+                                              name="delivery_notes_point"></textarea><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="delivery_notes_point"> Notas de entrega</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger waves-effect text-left" data-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success waves-effect text-left"> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!--- ./Modal crear nuevo shipper -->
+{% endblock %}
+{% block javascript %}
+
+    <script src="{% static 'assets/plugins/bower_components/footable/js/footable.all.min.js' %}"></script>
+    <script src="{% static 'assets/plugins/bower_components/bootstrap-select/bootstrap-select.min.js' %}"
+            type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+            integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        moment.locale('es-mx');
+        var listado_point = []
+
+        $(document).ready(function () {
+            if ('{{ edicion }}') {
+                console.log('{{ points | escapejs }}')
+                listado_point = JSON.parse('{{ points | escapejs }}'.replaceAll("'", '"'))
+                UpdateTableGeneral(true)
+            }
+            moment.lang('es', {
+                    months: 'Enero_Febrero_Marzo_Abril_Mayo_Junio_Julio_Agosto_Septiembre_Octubre_Noviembre_Diciembre'.split('_'),
+                    monthsShort: 'Enero._Feb._Mar_Abr._May_Jun_Jul._Ago_Sept._Oct._Nov._Dec.'.split('_'),
+                    weekdays: 'Domingo_Lunes_Martes_Miercoles_Jueves_Viernes_Sabado'.split('_'),
+                    weekdaysShort: 'Dom._Lun._Mar._Mier._Jue._Vier._Sab.'.split('_'),
+                    weekdaysMin: 'Do_Lu_Ma_Mi_Ju_Vi_Sa'.split('_')
+                }
+            );
+        })
+        const SaveNewPoint = (e) => {
+            {# Detenemos el evento tipo submit #}
+            e.preventDefault()
+            {# Validamos si viene de alguna edición    #}
+            var shipper_point = []
+            var delivery_point = []
+            $.each($('#delivery_point').val(), function (key, delivery) {
+                delivery_point.push({
+                    "id": delivery.split('&')[0],
+                    "nombre": delivery.split('&')[1]
+                })
+            });
+            $.each($('#shipper_point').val(), function (key, shipper) {
+                shipper_point.push({
+                    "id": shipper.split('&')[0],
+                    "nombre": shipper.split('&')[1]
+                })
+            });
+
+            if ($('#pk_point').val() == '') {
+                var point = listado_point[listado_point.findIndex(element => element.producto.id == $('#producto_point').val())]
+                if (point) {
+                    {# Validaremos todos los campos nada mas para actualizar el que ya existe #}
+                    if (point.tipo_point.id == $('#tipo_point').val() && point.qty_point == $('#qty_point').val() && point.weight_point == $('#weight_point').val() && point.po_numbers_point == $('#po_numbers_point').val()) {
+                        point.shipper_point = point.shipper_point.concat(shipper_point)
+                        point.delivery_point = point.delivery_point.concat(delivery_point)
+                    } else {
+                        listado_point.push({
+                            "id": listado_point.length + 1,
+                            "producto": {
+                                "id": $('#producto_point').val(),
+                                "nombre": $('#producto_point option:selected').data().nombre
+                            },
+                            "tipo_point": {
+                                "id": $('#tipo_point').val(),
+                                "nombre": $('#tipo_point option:selected').data().tipo
+                            },
+                            "qty_point": $('#qty_point').val(),
+                            "weight_point": $('#weight_point').val(),
+                            {#"precio_point": $('#precio_point').val(),#}
+                            "po_numbers_point": $('#po_numbers_point').val(),
+                            "shipper_point": shipper_point,
+                            "date_shipper_point": $('#date_shipper_point').val(),
+                            "shipping_notes_point": $('#shipping_notes_point').val(),
+                            "delivery_point": delivery_point,
+                            "date_delivery_point": $('#date_delivery_point').val(),
+                            "delivery_notes_point": $('#delivery_notes_point').val(),
+                        })
+                    }
+                } else {
+                    listado_point.push({
+                        "id": listado_point.length + 1,
+                        "producto": {
+                            "id": $('#producto_point').val(),
+                            "nombre": $('#producto_point option:selected').data().nombre
+                        },
+                        "tipo_point": {
+                            "id": $('#tipo_point').val(),
+                            "nombre": $('#tipo_point option:selected').data().tipo
+                        },
+                        "qty_point": $('#qty_point').val(),
+                        "weight_point": $('#weight_point').val(),
+                        {#"precio_point": $('#precio_point').val(),#}
+                        "po_numbers_point": $('#po_numbers_point').val(),
+                        "shipper_point": shipper_point,
+                        "date_shipper_point": $('#date_shipper_point').val(),
+                        "shipping_notes_point": $('#shipping_notes_point').val(),
+                        "delivery_point": delivery_point,
+                        "date_delivery_point": $('#date_delivery_point').val(),
+                        "delivery_notes_point": $('#delivery_notes_point').val(),
+                    })
+                }
+
+                UpdateTableGeneral()
+            } else {
+                {# Obtenemos el point a actualizar #}
+                var point = listado_point[listado_point.findIndex(element => element.id == $('#pk_point').val())]
+                point.producto = {
+                    "id": $('#producto_point').val(),
+                    "nombre": $('#producto_point option:selected').data().nombre
+                }
+                point.tipo_point = {
+                    "id": $('#tipo_point').val(),
+                    "nombre": $('#tipo_point option:selected').data().tipo
+                }
+                point.qty_point = $('#qty_point').val()
+                point.weight_point = $('#weight_point').val()
+                {#point.precio_point = $('#precio_point').val()#}
+                point.po_numbers_point = $('#po_numbers_point').val()
+                point.shipper_point = shipper_point
+                point.date_shipper_point = $('#date_shipper_point').val()
+                point.shipping_notes_point = $('#shipping_notes_point').val()
+                point.delivery_point = delivery_point
+                point.date_delivery_point = $('#date_delivery_point').val()
+                point.delivery_notes_point = $('#delivery_notes_point').val()
+                UpdateTableGeneral()
+            }
+        }
+
+        const UpdateTableGeneral = async (borrar = false) => {
+            {# Removemos la tabla por cuestiones de diseño y la volvemos a crear #}
+            $('#myTable').remove()
+            $('.table-responsive').html(`
+                <table id="myTable" class="table toggle-circle table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th data-toggle="true">Item</th>
+                                        <th>Tipo</th>
+                                        <th>QTY</th>
+                                        <th>Weigth</th>
+{#                                        <th>Precio</th>#}
+                                        <th>PO</th>
+                                        <th data-hide="all"></th>
+                                        <th data-hide="all"></th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="body_points">
+                                    </tbody>
+                                </table>
+            `)
+            {# Obtenemos el body del table #}
+            var div_content_body = $('#body_points')
+            {# Limpiamos el contenido viejo para actualizar #}
+            div_content_body.html('')
+            console.log(listado_point)
+            await $.each(listado_point, function (key, point) {
+                var shipper_div = ``
+                var delivery_div = ``
+                $.each(point.shipper_point, function (key, shipper) {
+                    shipper_div += `
+                        <br>
+                        ${shipper.nombre}
+                    `
+                });
+                $.each(point.delivery_point, function (key, delivery) {
+                    delivery_div += `
+                        <br>
+                        ${delivery.nombre}
+                    `
+                });
+                div_content_body.append(
+                    `
+                    <tr>
+                        <td>${point.producto.nombre}</td>
+                        <td>${point.tipo_point.nombre}</td>
+                        <td>${point.qty_point}</td>
+                        <td>${point.weight_point}</td>
+{#                        <td>${point.precio_point}</td>#}
+                        <td>${point.po_numbers_point}</td>
+                        <td class="row mb-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4"><b style="color: black">Shipper:</b>
+                                ${shipper_div}
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4"><b style="color: black">Shipping
+                                Date:</b> <br> ${moment(point.date_shipper_point).format('MMM Do , YYYY')}
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4"><b style="color: black">Shipping
+                                Notes:</b> <br> ${point.shipping_notes_point}
+                            </div>
+                        </td>
+                        <td class="row">
+                            <div class="col-lg-4 col-md-4 col-sm-4"><b style="color: black">Delivery:</b>
+                                ${delivery_div}
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4"><b style="color: black">Delivery
+                                Date:</b> <br> ${moment(point.date_delivery_point).format('MMM Do , YYYY')}
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4"><b style="color: black">Delivery
+                                Notes:</b> <br> ${point.delivery_notes_point}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                             <button type="button" class="btn btn-info btn-sm" data-toggle="modal"
+                                    data-target=".bs-example-modal-lg"
+                                        data-placement="top" title="Editar" onclick="loadCampos('${point.id}')">
+                                    <i class="ti-pencil-alt"></i></button>
+
+                            <button type="button" class="btn btn-danger btn-sm" data-toggle="tooltip" onclick="DeletePoint('${point.id}')"
+                                        data-placement="top" title="Eliminar">
+                                    <i class="ti-trash"></i></button>
+                        </td>
+                    </tr>
+                    `
+                )
+            });
+            if (!borrar) {
+                $('.bs-example-modal-lg').modal('toggle')
+                VaciarCampos()
+            }
+            loadStyleTable()
+        }
+
+        const VaciarCampos = () => {
+            $('#pk_point').val('')
+            $('#producto_point').val('')
+            $('#tipo_point').val('')
+            $('#qty_point').val('')
+            $('#weight_point').val('')
+            {#$('#precio_point').val('')#}
+            $('#po_numbers_point').val('')
+            $('#shipper_point').val([''])
+            $("#shipper_point").selectpicker("refresh");
+            $('#date_shipper_point').val(`{% now 'Y-m-d' %}T{% now 'H:m' %}`)
+            $('#shipping_notes_point').val('')
+            $('#delivery_point').val([''])
+            $("#delivery_point").selectpicker("refresh");
+            $('#date_delivery_point').val(`{% now 'Y-m-d' %}T{% now 'H:m' %}`)
+            $('#delivery_notes_point').val('')
+        }
+
+        const loadStyleTable = () => {
+            $('#myTable').footable();
+        }
+
+
+        const DeletePoint = (pk_point) => {
+            Swal.fire({
+                title: '¡Peligro!',
+                text: '¿Borrar point?',
+                type: 'warning',
+                confirmButtonText: 'Aceptar'
+            }).then((result) => {
+                console.log(result)
+                /* Read more about isConfirmed, isDenied below */
+                if (result.value) {
+                    listado_point.splice(listado_point.findIndex(element => element.id == pk_point), 1)
+                    UpdateTableGeneral(true)
+                }
+            })
+        }
+
+        const loadCampos = (pk_point) => {
+            {# Obtenemos el objeto en el array que se encuentra guardado de acuerdo al pk que estamos recibiendo #}
+            var point = listado_point[listado_point.findIndex(element => element.id == pk_point)]
+            {# Una vez que tenemos el arreglo vamos a rellenar los datos con los valores guardados #}
+
+            var shipper_div = []
+            var delivery_div = []
+            $.each(point.shipper_point, function (key, shipper) {
+                shipper_div.push(`${shipper.id}&${shipper.nombre}`)
+            });
+            $.each(point.delivery_point, function (key, delivery) {
+                delivery_div.push(`${delivery.id}&${delivery.nombre}`)
+            });
+            console.log(shipper_div)
+            console.log(delivery_div)
+            $('#pk_point').val(point.id)
+            $('#producto_point').val(point.producto.id)
+            $('#tipo_point').val(point.tipo_point.id)
+            $('#qty_point').val(point.qty_point)
+            $('#weight_point').val(point.weight_point)
+            {#$('#precio_point').val(point.precio_point)#}
+            $('#po_numbers_point').val(point.po_numbers_point)
+            $('#shipper_point').selectpicker('val', shipper_div);
+            $("#shipper_point").selectpicker("refresh");
+            $('#date_shipper_point').val(moment(point.date_shipper_point).format('Y-mm-DTHH:mm'))
+            $('#shipping_notes_point').val(point.shipping_notes_point)
+            $('#delivery_point').selectpicker('val', delivery_div);
+            $("#delivery_point").selectpicker("refresh");
+            $('#date_delivery_point').val(moment(point.date_delivery_point).format('Y-mm-DTHH:mm'))
+            $('#delivery_notes_point').val(point.delivery_notes_point)
+        }
+
+        const SaveNewOrden = (e) => {
+            {# Detendremos el event para realizar la petición por ajax #}
+            e.preventDefault()
+            {# Añadimos la validación de que si tiene un punto pueda crear la orden    #}
+            {#if (listado_point.length != 0) {#}
+            {# Le asignamos el array convertido a texto al campo oculto    #}
+            $('#points').val(JSON.stringify(listado_point))
+            {# Realizamos la petición ajax para la misma url y crear la nueva orden  #}
+            $.ajax({
+                url: window.location.pathname,
+                type: 'POST',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: $('#form-new-orden').serialize(),
+                success: function (response) {
+                    {#Swal.fire({#}
+                    {#    title: '¡Exito!',#}
+                    {#    text: response.message,#}
+                    {#    type: 'success',#}
+                    {#    confirmButtonText: 'Aceptar'#}
+                    {#s}).then((result) => {#}
+                    {#    console.log(result)#}
+                    {#    /* Read more about isConfirmed, isDenied below */#}
+                    {#    if (result.value) {#}
+                    $(location).attr('href', '{% url "catalogo:ordenes-list" %}')
+                    {#    }#}
+                    {#s})#}
+                },
+                error: function (e) {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'warning',
+                        confirmButtonText: 'Aceptar'
+                    })
+                }
+
+
+            })
+
+            {#s} else {#}
+            {#    Swal.fire({#}
+            {#        title: '¡Error!',#}
+            {#        text: 'Para poder crear la orden es necesario tener un poin minimo',#}
+            {#        type: 'warning',#}
+            {#        confirmButtonText: 'Aceptar'#}
+            {#    })#}
+            {#s}#}
+        }
+
+        const changeButtonSaveSearch = (activate) => {
+            if (activate) {
+                {# Mostramos el boton de buscar y ocultamos el de guardar    #}
+                $('#btnSearch').removeAttr('hidden', 'hidden')
+                $('#btnSave').attr('hidden', 'hidden')
+            } else {
+                {# Mostramos el boton de guardar y ocultamos el de buscar    #}
+                $('#btnSave').removeAttr('hidden', 'hidden')
+                $('#btnSearch').attr('hidden', 'hidden')
+            }
+        }
+
+        const searchOrden = () => {
+            var filtro_busqueda = $('#type_search').val()
+            var data = {}
+            if (filtro_busqueda != '') {
+                {#De acuerdo al filtro de busqueda validaremos que el campo no venga vacio#}
+                if (filtro_busqueda == 1) {
+                    var cliente_id = $('#cliente_search').val()
+                    if (cliente_id != '') {
+                        data = {
+                            type: filtro_busqueda,
+                            cliente_id: cliente_id
+                        }
+                    } else {
+                        Swal.fire({
+                            title: '¡Error!',
+                            text: 'Para poder realizar la busqueda es completar los campos requeridos',
+                            type: 'warning',
+                            confirmButtonText: 'Aceptar'
+                        })
+                        return
+                    }
+                }
+                if (filtro_busqueda == 2) {
+                    var proveedor_id = $('#proveedor_search').val()
+                    if (proveedor_id != '') {
+                        data = {
+                            type: filtro_busqueda,
+                            proveedor_id: proveedor_id
+                        }
+                    } else {
+                        Swal.fire({
+                            title: '¡Error!',
+                            text: 'Para poder realizar la busqueda es completar los campos requeridos',
+                            type: 'warning',
+                            confirmButtonText: 'Aceptar'
+                        })
+                        return
+                    }
+                }
+                if (filtro_busqueda == 3) {
+                    var fecha_inicio = $('#fecha_inicio_search').val()
+                    var fecha_fin = $('#fecha_inicio_search').val()
+                    if (cliente_id != '') {
+                        data = {
+                            type: filtro_busqueda,
+                            fecha_inicio: fecha_inicio,
+                            fecha_fin: fecha_fin
+                        }
+                    } else {
+                        Swal.fire({
+                            title: '¡Error!',
+                            text: 'Para poder realizar la busqueda es completar los campos requeridos',
+                            type: 'warning',
+                            confirmButtonText: 'Aceptar'
+                        })
+                        return
+                    }
+                }
+                var content_table = $('#table_informacion')
+                {# Antes de iniciar a apendarle la información destruimos todo lo que tenga la table #}
+                content_table.remove()
+                {# Apendamos el header de la tabla para despues apendarle el body de acuerdo a la inforación obtenida #}
+                content_table.append(``)
+
+
+                {# Realizaremos la petción ajax para obtener la información con el campo solicitado #}
+                $.ajax({
+                    url: '{% url "catalogo:orden-search" %}',
+                    type: 'GET',
+                    beforeSend: (xhr) => {
+                        xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                    },
+                    data: data,
+                    success: function (response) {
+
+                    },
+                    error: function (e) {
+                        Swal.fire({
+                            title: '¡Error!',
+                            text: e.responseJSON.message,
+                            type: 'error',
+                            confirmButtonText: 'Intentar nuevamente'
+                        })
+                    }
+                })
+                console.log(data, '<----- Data')
+
+            } else {
+                Swal.fire({
+                    title: '¡Error!',
+                    text: 'Para poder realizar la busqueda es necesario elegir una opción en el filtro de busqueda.',
+                    type: 'warning',
+                    confirmButtonText: 'Aceptar'
+                })
+            }
+        }
+
+        const showDivs = (value) => {
+            console.log(value, '<----- value')
+            if (value == 1) {
+                {# Mostramos el div de clientes y ocultamos los demas    #}
+                $('#cliente').removeAttr('hidden', 'hidden')
+                $('#proveedor').attr('hidden', 'hidden')
+                $('.fechas').attr('hidden', 'hidden')
+            } else if (value == 2) {
+                {# Mostramos el div de clientes y ocultamos los demas    #}
+                $('#proveedor').removeAttr('hidden', 'hidden')
+                $('#cliente').attr('hidden', 'hidden')
+                $('.fechas').attr('hidden', 'hidden')
+            } else if (value == 3) {
+                $('.fechas').removeAttr('hidden', 'hidden')
+                $('#cliente').attr('hidden', 'hidden')
+                $('#proveedor').attr('hidden', 'hidden')
+            } else {
+                $('#proveedor').attr('hidden', 'hidden')
+                $('#cliente').attr('hidden', 'hidden')
+                $('.fechas').attr('hidden', 'hidden')
+            }
+        }
+    </script>
+{% endblock %}

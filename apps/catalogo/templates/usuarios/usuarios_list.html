@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <style>
+        b {
+            color: red;
+        }
+
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">LISTADO</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Catalogos</li>
+                <li class="active">Usuarios</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row">
+        <div class="col-lg-12 text-right">
+            <div class="button-box">
+                {#                <button class="btn btn-info"> Exportar <i class="ti-share ml-3"#}
+                {#                                                          style="font-size: 1.5rem"></i></button>#}
+
+                <button class="btn btn-success" data-toggle="modal" data-target=".bs-example-modal-lg"> Nuevo Usuario
+                    <i class="ti-user ml-3"
+                       style="font-size: 1.5rem"></i></button>
+            </div>
+        </div>
+        <div class="col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Correo Électronico</th>
+                        <th>Usuario</th>
+                        <th> Rol</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for usuario in usuarios %}
+                        <tr>
+                            <td> {{ usuario.nombre }} {{ usuario.ap_paterno }} {{ usuario.ap_materno }}</td>
+                            <td> {{ usuario.correo }}</td>
+                            <td> {{ usuario.usuario.username }}</td>
+                            <td class="text-center">
+                                {% if usuario.usuario.administrador %}
+                                    <span class="label label-rouded label-success"> Administrador</span>
+                                {% elif usuario.usuario.ejecutivo %}
+                                    <span class="label label-rouded label-success"> Ejecutivo</span>
+                                {% else %}
+                                    <span class="label label-rouded label-success"> Cliente</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+{#                                <button class="btn btn-info" data-toggle="tooltip"#}
+{#                                        data-placement="top" title="Editar"#}
+{#                                        onclick="ShowInformationEdit('{{ cliente.pk }}','{{ cliente.nombre }}','{{ cliente.nombre_corto }}', '{{ cliente.direccion }}',`{{ cliente.get_contactos }}`)">#}
+{#                                    <i class="ti-pencil-alt"></i></button>#}
+                                <button class="btn btn-danger" data-toggle="tooltip"
+                                        data-placement="top" title="Eliminar"
+                                        onclick="eliminarUsuarioSistema('{{ usuario.nombre }}','{{ usuario.ap_paterno }}' ,'{{ usuario.ap_materno }}', '{{ usuario.pk }}')">
+                                    <i class="icon-trash"></i></button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!--- Modal crear nuevo shipper -->
+    <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+         aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><i class="ti-user ml-3"
+                                                                      style="font-size: 1.5rem"></i> Nuevo Usuario
+                    </h4>
+                </div>
+                <form class="floating-labels" id="form-new-user" style="font-size: 15px !important;"
+                      onsubmit="saveNewUser(event)">
+                    <div class="modal-body">
+                        <h4 class="text-center"> Datos para el Usuario</h4>
+                        {% csrf_token %}
+                        <div class="row mt-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre"
+                                           name="nombre"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Nombres (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="ap_paterno"
+                                           name="ap_paterno" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Primer apellido (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="ap_materno"
+                                           name="ap_materno"><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Segundo apellido</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="email" class="form-control" id="correo_electronico"
+                                           name="correo_electronico" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Email (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <select class="form-control" id="tipo_usuario" name="tipo_usuario"
+                                            required>
+                                        <option> Seleccione un rol</option>
+                                        <option value="1"> Administrador</option>
+                                        <option value="2"> Ejecutivo</option>
+                                        <option value="3"> Cliente</option>
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                    <label for="input6">Rol (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="username"
+                                           name="username" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Usuario (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <label for="input1" style="position: relative"> Contraseña (<b>*</b>)</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="contrasenia"
+                                               name="contrasenia" required>
+                                        <div class="input-group-addon" onclick="showPassword()"><i
+                                                class="fa fa-eye-slash icon"></i></div>
+                                        <span
+                                                class="highlight"></span><span
+                                            class="bar"> </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <label for="input1" style="position: relative"> Repetir Contraseña
+                                        (<b>*</b>)</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="r_contrasenia"
+                                               name="r_contrasenia" required>
+                                        <span
+                                                class="highlight"></span><span
+                                            class="bar"> </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <select class="form-control" id="cliente_id" name="cliente_id"
+                                            required>
+                                        <option> Seleccione un cliente</option>
+                                        {% for c in clientes %}
+                                            <option value="{{c.pk}}"> {{ c.nombre}}</option>
+                                        {% endfor%}
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                    <label for="input6">Rol</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger waves-effect text-left" data-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success waves-effect text-left"> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!--- ./Modal crear nuevo shipper -->
+{% endblock %}
+{% block javascript %}
+    <script>
+        const saveNewUser = (e) => {
+            {#    Detenemos el evento submit para hacer la petición por ajax #}
+            e.preventDefault()
+            {# Validamos que las contraseñas sean las mismas #}
+            var contrasenia = $('#contrasenia').val()
+            var r_contrasenia = $('#r_contrasenia').val()
+            if (contrasenia == r_contrasenia) {
+                {# Hacemos la petición por ajax #}
+                $.ajax({
+                    url: '{% url "catalogo:usuario-new" %}',
+                    type: 'POST',
+                    data: $('#form-new-user').serialize(),
+                    success: function (response) {
+                        {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                        {#Swal.fire({#}
+                        {#    title: '¡Éxito!',#}
+                        {#    text: response.message,#}
+                        {#    type: 'success',#}
+                        {#    confirmButtonText: 'Aceptar'#}
+                        {#s}).then((result) => {#}
+                        {#    console.log(result)#}
+                        {#    /* Read more about isConfirmed, isDenied below */#}
+                        {#    if (result.value) {#}
+                                window.location.reload()
+                        {#    }#}
+                        {#s})#}
+                    },
+                    error: (e) => {
+                        console.log(e.responseJSON)
+                        Swal.fire({
+                            title: '¡Error!',
+                            text: e.responseJSON.message,
+                            type: 'error',
+                            confirmButtonText: 'Intentar nuevamente'
+                        })
+                    }
+                })
+
+            } else {
+                Swal.fire({
+                    title: '¡Peligro!',
+                    text: 'Las contraseñas no coinciden, intente nuevamente',
+                    type: 'warning',
+                    confirmButtonText: 'Aceptar'
+                })
+            }
+
+        }
+
+        const showPassword = () => {
+            var cambio = document.getElementById("contrasenia");
+            if (cambio.type === "password") {
+                cambio.type = "text";
+                $('.icon').removeClass('fa fa-eye-slash').addClass('fa fa-eye');
+            } else {
+                cambio.type = "password";
+                $('.icon').removeClass('fa fa-eye').addClass('fa fa-eye-slash');
+            }
+        }
+
+        const eliminarUsuarioSistema = (nombre,paterno,materno, pk_persona) => {
+            console.log('Llego')
+            Swal.fire({
+                title: '¡Peligro!',
+                text: '¿Deseas eliminar el usuario: ' + nombre + ' ' + paterno + ' ' + materno,
+                type: 'warning',
+                confirmButtonText: 'Aceptar'
+            }).then((result) => {
+                console.log(result)
+                /* Read more about isConfirmed, isDenied below */
+                if (result.value) {
+                    $.ajax({
+                        url: '{% url 'catalogo:usuario-delete' %}',
+                        type: 'POST',
+                        beforeSend: (xhr) => {
+                            xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                        },
+                        data: {
+                            persona: pk_persona
+                        },
+                        success: function (response) {
+                            {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                            {#Swal.fire({#}
+                            {#    title: '¡Éxito!',#}
+                            {#    text: response.message,#}
+                            {#    type: 'success',#}
+                            {#    confirmButtonText: 'Aceptar'#}
+                            {#s}).then((result) => {#}
+                            {#    console.log(result)#}
+                            {#    /* Read more about isConfirmed, isDenied below */#}
+                            {#    if (result.value) {#}
+                                    window.location.reload()
+                            {#    }#}
+                            {#s})#}
+                        },
+                        error: (e) => {
+                            Swal.fire({
+                                title: '¡Error!',
+                                text: e.responseJSON.message,
+                                type: 'error',
+                                confirmButtonText: 'Intentar nuevamente'
+                            })
+                        }
+                    });
+                }
+            })
+        }
+    </script>
+{% endblock %}

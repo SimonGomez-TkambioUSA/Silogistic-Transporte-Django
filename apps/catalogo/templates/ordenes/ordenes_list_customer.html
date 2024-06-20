@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+
+    <style>
+        .floating-labels .form-control {
+            font-size: 14px !important;
+        }
+
+        .floating-labels label {
+            font-size: 14px !important;
+        }
+
+        .footable-row-detail-inner {
+            width: 100% !important;
+        }
+
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">LISTADO</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Catalogos</li>
+                <li class="active">Ordenes</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row">
+        <div class="col-lg-6">
+            <ul class="nav nav-pills">
+                {% if filtro == 1%}
+                <li class="nav-item">
+                    <a class="nav-link
+                    active" href="{% url 'catalogo:ordenes-list-customer' %}">Abiertas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " href="{% url 'catalogo:ordenes-list-customer' %}?ordenes=True">Todas </a>
+                </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link
+                        active" href="{% url 'catalogo:ordenes-list-customer' %}?ordenes=True" > Todas </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="" href="{% url 'catalogo:ordenes-list-customer' %}" > Abiertas </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>ORDEN</th>
+                        <th>ESJ PO </th>
+                        <th>DESTINO FINAL </th>
+                        <th>FLATBED </th>
+                        <th>CARRIER MX</th>
+                        <th>CARRIER USA</th>
+                        <th>STATUS</th>
+                        <th>LOADING FROM WAREHOUSE</th>
+                        <th>DEPARTURE ESJ</th>
+                        <th>ARRIVAL TO JUAREZ</th>
+                        <th>CROSSING</th>
+                        <th>ARRIVAL TO EL PASO</th>
+                        <th>DEPARTURE USA</th>
+                        <th>ARRIVAL TO DESTINATION</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {% for orden in ordenes %}
+                            <tr>
+                                <td>ORD-000{{orden.pk}}</td>
+                                <td> {{ orden.esj_po|default:'N/A' }}</td>
+                                <td> {{ orden.get_destination }}</td>
+                                <td> {{ orden.flatbed|default:'N/A' }}</td>
+                                <td> {{ orden.carrier_mx|default:'N/A' }}</td>
+                                <td> {{ orden.carrier_usa|default:'N/A' }}</td>
+                                <td class="text-center">
+                                    <span type="button" class="label label-rouded"        
+                                        style="background-color: {{ orden.status_orden.color }} !important;"> {{ orden.status_orden.descripcion }}</span>
+                                </td>
+                                <td>
+                                    {{orden.loading_warehouse}}
+                                    <b>Date:</b> {{ orden.loading_warehouse|date:'d/m/Y'|default:'N/A' }}
+                                    <br>
+                                    <b>Time:</b> {{ orden.loading_warehouse|date:'H:m'|default:'N/A' }}
+                                </td>
+                                <td>
+                                    <b>Date:</b> {{ orden.departure_esj|date:'d/m/Y'|default:'N/A' }}
+                                    <br>
+                                    <b>Time:</b> {{ orden.departure_esj|date:'H:m'|default:'N/A' }}
+                                </td>
+                                <td>
+                                    <b>Date:</b> {{ orden.arrival_juarez|date:'d/m/Y'|default:'N/A' }}
+                                    <br>
+                                    <b>Time:</b> {{ orden.arrival_juarez|date:'H:m'|default:'N/A' }}
+                                </td>
+                                <td>
+                                  
+                                </td>
+                                <td>
+                                    <b>Date:</b> {{ orden.arrival_el_paso|date:'d/m/Y'|default:'N/A' }}
+                                    <br>
+                                    <b>Time:</b> {{ orden.arrival_el_paso|date:'H:m'|default:'N/A' }}
+                                </td>
+                                <td>
+                                    <b>Date:</b> {{ orden.departure_usa|date:'d/m/Y'|default:'N/A' }}
+                                    <br>
+                                    <b>Time:</b> {{ orden.departure_usa|date:'H:m'|default:'N/A' }}
+                                </td>
+                                <td>
+                                    <b>Date:</b> {{ orden.arrival_destination|date:'d/m/Y'|default:'N/A' }}
+                                    <br>
+                                    <b>Time:</b> {{ orden.arrival_destination|date:'H:m'|default:'N/A' }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+            integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        $(document).ready(function () {
+            $('#myTable').DataTable({
+                reponsive: true,
+                "pageLength": 50,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+        })
+    </script>
+{% endblock %}

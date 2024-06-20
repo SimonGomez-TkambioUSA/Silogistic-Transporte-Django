@@ -1,0 +1,614 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+
+    <style>
+        b {
+            color: red;
+        }
+
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">LISTADO</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Catalogos</li>
+                <li class="active">Delivery Points</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row">
+        <div class="col-lg-12 text-right">
+            <div class="button-box">
+                {#                <button class="btn btn-info"> Exportar <i class="ti-share ml-3"#}
+                {#                                                          style="font-size: 1.5rem"></i></button>#}
+
+                <button class="btn btn-success" data-toggle="modal" data-target=".bs-example-modal-lg"> Nuevo Delivery
+                    <i class="ti-bag ml-3"
+                       style="font-size: 1.5rem"></i></button>
+            </div>
+        </div>
+        <div class="col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Delivery</th>
+                        <th>País</th>
+                        <th>Estado</th>
+                        <th>Ciudad</th>
+                        <th>Dirección</th>
+                        <th>Contacto</th>
+                        <th>Estatus</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for delivery in deliverys %}
+                        <tr>
+                            <td>{{ delivery.nombre }}</td>
+                            <td>{{ delivery.cuidad.estado.pais.nombre }} / {{ delivery.cuidad.estado.pais.clave }}</td>
+                            <td>{{ delivery.cuidad.estado.nombre }} / {{ delivery.cuidad.estado.clave }}</td>
+                            <td>{{ delivery.cuidad.nombre }}</td>
+                            <td>{{ delivery.direccion }}</td>
+                            <td>
+                                <ul>
+                                    <li><b style="color: black">Nombre:</b> {{ delivery.c_nombre }}</li>
+                                    <li><b style="color: black">Telefono:</b> {{ delivery.c_telefono }}</li>
+                                    <li><b style="color: black">Email:</b> {{ delivery.c_email }}</li>
+                                </ul>
+
+                            </td>
+                            <td class="text-center">
+                                {% if delivery.activo %}
+                                    <span class="label label-success label-rouded"> Activo <i
+                                            class="icon-lock-open"></i></span>
+                                {% else %}
+                                    <span class="label label-danger label-rouded"> Inactivo <i
+                                            class="icon-lock"></i></span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-info" data-toggle="tooltip"
+                                        data-placement="top" title="Editar"
+                                        onclick="ShowInformationEdit('{{ delivery.pk }}','{{ delivery.nombre }}','{{ delivery.c_nombre }}', '{{ delivery.c_telefono }}',
+                                                '{{ delivery.c_email }}','{{ delivery.direccion }}','{{ delivery.cp }}','{{ delivery.cuidad.estado.pais.id }}','{{ delivery.cuidad.estado.id }}', '{{ delivery.cuidad.id }}','{{ delivery.tipo }}')">
+                                    <i class="ti-pencil-alt"></i></button>
+
+                                {% if delivery.activo %}
+                                    <button class="btn btn-danger" data-toggle="tooltip"
+                                            data-placement="top" title="Desactivar"
+                                            onclick="ActivateDeactivateDelivery('{{ delivery.pk }}', true)"><i
+                                            class="icon-lock"></i></button>
+                                {% else %}
+                                    <button class="btn btn-success" data-toggle="tooltip"
+                                            data-placement="top" title="Activar"
+                                            onclick="ActivateDeactivateDelivery('{{ delivery.pk }}', '')"><i
+                                            class="icon-lock-open"></i></button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!--- Modal crear nuevo delivery -->
+    <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+         aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><i class="ti-bag ml-3"
+                                                                      style="font-size: 1.5rem"></i> Nuevo Delivery
+                    </h4>
+                </div>
+                <form class="floating-labels" id="form-new-delivery" style="font-size: 15px !important;"
+                      onsubmit="SaveNewDelivery(event)">
+                    <div class="modal-body">
+                        <h4 class="text-center"> Datos para el delivery</h4>
+                        {% csrf_token %}
+                        <div class="row mt-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre_delivery"
+                                           name="nombre_delivery"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Delivery (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="contacto_delivery"
+                                           name="contacto_delivery"><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Contacto</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="telefono_contacto_delivery"
+                                           name="telefono_contacto_delivery" minlength="10"
+                                           maxlength="10"
+                                           onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Telefono (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="email_contacto_delivery"
+                                           name="email_contacto_delivery"><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Correo Électronico</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="direccion_contacto_delivery"
+                                           name="direccion_contacto_delivery" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Dirección (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="¨cp_zip_contacto_delivery"
+                                           name="cp_zip_contacto_delivery" minlength="5"
+                                           maxlength="5"
+                                           onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                    ><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> CP/ZIP</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <select class="form-control" id="pais_delivery" onchange="loadEstados(this.value)"
+                                    >
+                                        <option> Seleccione un país</option>
+                                        {% for pais in paises %}
+                                            <option value="{{ pais.id }}"> {{ pais.nombre }} / {{ pais.clave }}</option>
+                                        {% endfor %}
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                    <label for="input6">País</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <select class="form-control" id="estado_delivery"
+                                            onchange="loadCiudades(this.value)"
+                                    >
+                                        <option> Seleccione un estado</option>
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                    <label for="input6">Estado</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <select class="form-control" id="ciudad_delivery" name="ciudad_delivery">
+                                        <option> Seleccione una cuidad</option>
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                    <label for="input6">Ciudad</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <div class="form-group">
+                                    <h4>¿Este Delivery Points tambien es shipper? <input type="checkbox"
+                                                                                         id="shipper_delivery"
+                                                                                         name="shipper_delivery"></h4>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger waves-effect text-left" data-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success waves-effect text-left"> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!--- ./Modal crear nuevo delivery -->
+
+
+    <!--- Modal editar delivery -->
+
+    <div class="modal" id="modal-edit-delivery" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+         aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><i class="ti-pencil-alt ml-3"
+                                                                      style="font-size: 1.5rem"></i> Editar Delivery
+                    </h4>
+                </div>
+                <form class="floating-labels" id="form-edit-delivery" style="font-size: 15px !important;"
+                      onsubmit="SaveInformationEditDelivery(event)">
+                    <div class="modal-body">
+                        <h4 class="text-center"> Datos para el delivery</h4>
+                        {% csrf_token %}
+                        <input type="hidden" id="delivery" name="delivery">
+                        <div class="row mt-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre_delivery_update"
+                                           name="nombre_delivery_update"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Delivery (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="contacto_delivery_update"
+                                           name="contacto_delivery_update" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Contacto (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="telefono_contacto_delivery_update"
+                                           name="telefono_contacto_delivery_update" minlength="10"
+                                           maxlength="10"
+                                           onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Telefono (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="email_contacto_delivery_update"
+                                           name="email_contacto_delivery_update" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Correo Électronico (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="direccion_contacto_delivery_update"
+                                           name="direccion_contacto_delivery_update" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Dirección (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-md-2 col-sm-2">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="cp_zip_contacto_delivery_update"
+                                           name="cp_zip_contacto_delivery_update" minlength="5"
+                                           maxlength="5"
+                                           onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> CP/ZIP (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <select class="form-control" id="pais_delivery_update"
+                                            onchange="loadEstados(this.value, true)"
+                                            required>
+                                        <option> Seleccione un país</option>
+                                        {% for pais in paises %}
+                                            <option value="{{ pais.id }}"> {{ pais.nombre }} / {{ pais.clave }}</option>
+                                        {% endfor %}
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                    <label for="input6">País (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <select class="form-control" id="estado_delivery_update"
+                                            onchange="loadCiudades(this.value,true)"
+                                            required>
+                                        <option> Seleccione un estado</option>
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                    <label for="input6">Estado (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <select class="form-control" id="ciudad_delivery_update"
+                                            name="ciudad_delivery_update"
+                                            required>
+                                        <option> Seleccione una cuidad</option>
+                                    </select><span class="highlight"></span> <span class="bar"></span>
+                                    <label for="input6">Ciudad (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-12 col-md-12 col-sm-12">
+                                <div class="form-group">
+                                    <h4>¿Este Delivery Points tambien es shipper? <input type="checkbox"
+                                                                                         id="shipper_delivery_update"
+                                                                                         name="shipper_delivery_update">
+                                    </h4>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger waves-effect text-left" data-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-success waves-effect text-left"> Guardar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!--- ./Modal editar delivery -->
+{% endblock %}
+
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#myTable').DataTable({
+                columnDefs: [{
+                    orderable: false,
+                    targets: [7]
+                }],
+                reponsive: true,
+                "pageLength": 50,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+        })
+
+        const loadEstados = (pais, update = false) => {
+            {#Obtenemos el select en el cual se le apendaran los estados #}
+            if (!update) {
+                var select_body = $('#estado_delivery')
+
+            } else {
+                var select_body = $('#estado_delivery_update')
+            }
+            $.ajax({
+                url: '{% url 'catalogo:estados-list' %}',
+                type: 'GET',
+                data: {csrfmiddlewaretoken: '{{ csrf_token }}', pais: pais},
+                success: function (data_val) {
+                    console.log(data_val, '<------- Response Estado')
+                    if (data_val.estados.length != 0) {
+                        select_body.html('')
+                        select_body.append(`<option> Seleccione un estado</option>`)
+                        $.each(data_val.estados, function (key, estado) {
+                            select_body.append(`
+                                    <option value="${estado.id}"> ${estado.nombre} / ${estado.clave}</option>
+                                `)
+                        });
+                    }
+
+                }
+            });
+        }
+
+        const loadCiudades = (estado, update = false) => {
+            {#Obtenemos el select en el cual se le apendaran los estados #}
+            if (!update) {
+                var select_body = $('#ciudad_delivery')
+            } else {
+                var select_body = $('#ciudad_delivery_update')
+            }
+            $.ajax({
+                url: '{% url 'catalogo:ciudades-list' %}',
+                type: 'GET',
+                data: {csrfmiddlewaretoken: '{{ csrf_token }}', estado: estado},
+                success: function (data_val) {
+                    console.log(data_val, '<------- Response Estado')
+                    if (data_val.ciudades.length != 0) {
+                        select_body.html('')
+                        select_body.append(`<option> Seleccione una ciudad</option>`)
+                        $.each(data_val.ciudades, function (key, ciudad) {
+                            select_body.append(`
+                                    <option value="${ciudad.id}"> ${ciudad.nombre}</option>
+                                `)
+                        });
+                    }
+                }
+            });
+        }
+
+        const SaveNewDelivery = (e) => {
+            {#  Detenemos el evento del submit #}
+            e.preventDefault()
+            {# Realizamos la peticion ajax para evitar la recargar la pagina por si hay algun error   #}
+
+            Swal.fire({
+                title: '¡Alerta!',
+                text: "¿Desea añadir un nuevo delivery?",
+                type: 'warning',
+                confirmButtonText: 'Aceptar',
+                showCancelButton: true,
+                cancelButtonColor: '#d33',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.value) {
+                    $.ajax({
+                        url: '{% url 'catalogo:delivery-new' %}',
+                        type: 'POST',
+                        beforeSend: (xhr) => {
+                            xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                        },
+                        data: $('#form-new-delivery').serialize(),
+                        success: function (response) {
+                            console.log(response, '<-------Response')
+                            {#Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                            {#Swal.fire({#}
+                            {#    title: '¡Éxito!',#}
+                            {#    text: response.message,#}
+                            {#    type: 'success',#}
+                            {#    confirmButtonText: 'Aceptar'#}
+                            {#s}).then((result) => {#}
+                            {#    console.log(result)#}
+                            {#    /* Read more about isConfirmed, isDenied below */#}
+                            {#    if (result.value) {#}
+                            window.location.reload()
+                            {#    }#}
+                            {#s})#}
+                        },
+                        error: (e) => {
+                            console.log(e)
+                            Swal.fire({
+                                title: '¡Error!',
+                                text: e.responseJSON.message,
+                                type: 'error',
+                                confirmButtonText: 'Intentar nuevamente'
+                            })
+                        }
+                    });
+                }
+            });
+        }
+
+        const ShowInformationEdit = (pk_delivery, nombre_delivery, c_nombre, c_telefono, c_email, c_direccion, c_cpzip, pais_delivery, estado_delivery, cuidad_delivery, type_delivery) => {
+            {# Asignamos los valores que recibimos medienta la función al formulario    #}
+            $('#nombre_delivery_update').val(nombre_delivery)
+            $('#contacto_delivery_update').val(c_nombre)
+            $('#telefono_contacto_delivery_update').val(c_telefono)
+            $('#email_contacto_delivery_update').val(c_email)
+            $('#direccion_contacto_delivery_update').val(c_direccion)
+            $('#cp_zip_contacto_delivery_update').val(c_cpzip)
+            $('#pais_delivery_update').val(pais_delivery).trigger('onchange')
+            setTimeout(function () {
+                $('#estado_delivery_update').val(estado_delivery).trigger('onchange')
+            }, 500)
+            setTimeout(function () {
+                $('#ciudad_delivery_update').val(cuidad_delivery)
+                console.log('Se ejecuto')
+            }, 1000)
+            $('#delivery').val(pk_delivery)
+            if (type_delivery == 3) {
+                $('#shipper_delivery_update').attr('checked', 'checked')
+            }
+            {# Mostramos el modal para la edición    #}
+            $('#modal-edit-delivery').modal('toggle')
+        }
+
+        const SaveInformationEditDelivery = (e) => {
+            {# Detenemos el evento del subtmit para cambiarlo por ajax    #}
+            e.preventDefault()
+            {# Realizaremos la petición ajax por si hay algun error no recargar la página por completo    #}
+
+            $.ajax({
+                url: '{% url 'catalogo:delivery-edit' %}',
+                type: 'POST',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: $('#form-edit-delivery').serialize(),
+                success: function (response) {
+                    console.log(response, '<-------Response')
+                    {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                    {#Swal.fire({#}
+                    {#    title: '¡Éxito!',#}
+                    {#    text: response.message,#}
+                    {#    type: 'success',#}
+                    {#    confirmButtonText: 'Aceptar'#}
+                    {#s}).then((result) => {#}
+                    {#    console.log(result)#}
+                    {#    /* Read more about isConfirmed, isDenied below */#}
+                    {#    if (result.value) {#}
+                    window.location.reload()
+                    {#    }#}
+                    {#s})#}
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+        }
+
+        const ActivateDeactivateDelivery = (delivery_pk, deactivate) => {
+            {# Realizaremos la petición ajax por si hay algun error no recargar la página por completo    #}
+            $.ajax({
+                url: '{% url 'catalogo:shipper-delivery-deactivate-activate' %}',
+                type: 'POST',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: {
+                    pk: delivery_pk,
+                    deactivate: deactivate
+                },
+                success: function (response) {
+                    console.log(response, '<-------Response')
+                    {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                    {#Swal.fire({#}
+                    {#    title: '¡Éxito!',#}
+                    {#    text: response.message,#}
+                    {#    type: 'success',#}
+                    {#    confirmButtonText: 'Aceptar'#}
+                    {#s}).then((result) => {#}
+                    {#    console.log(result)#}
+                    {#    /* Read more about isConfirmed, isDenied below */#}
+                    {#    if (result.value) {#}
+                    window.location.reload()
+                    {#    }#}
+                    {#s})#}
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+        }
+
+
+    </script>
+{% endblock %}

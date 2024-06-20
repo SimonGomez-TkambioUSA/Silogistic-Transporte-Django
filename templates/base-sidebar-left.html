@@ -1,0 +1,58 @@
+{% load static %}
+<div class="navbar-default sidebar" role="navigation">
+    <div class="sidebar-nav navbar-collapse slimscrollsidebar">
+        <ul class="nav" id="side-menu">
+            <li class="sidebar-search hidden-sm hidden-md hidden-lg">
+            <li class="sidebar-search hidden-sm hidden-md hidden-lg">
+                <!-- input-group -->
+                <div class="input-group custom-search-form">
+                    <input type="text" class="form-control" placeholder="Search..."> <span class="input-group-btn">
+            <button class="btn btn-default" type="button"> <i class="fa fa-search"></i> </button>
+            </span></div>
+                <!-- /input-group -->
+            </li>
+            {% if request.user.cliente %}
+{#                <li><a href="{% url 'catalogo:ordenes-list-customer' %}" id="nav-order" class="waves-effect"><i class="ti-notepad"></i> <span#}
+{#                        class="hide-menu" style="margin-right: 2% !important;">  Ordenes </span></a></li>#}
+
+            {% else %}
+                <li><a href="{% url 'catalogo:ordenes-list' %}" id="nav-order" class="waves-effect"><i class="ti-notepad"></i> <span
+                class="hide-menu" style="margin-right: 2% !important;">  Ordenes </span></a></li>
+                <li><a href="{% url 'catalogo:ordenes-list-contable' %}?ordenes=16" class="waves-effect"><i class="ti-notepad"></i> <span
+                    class="hide-menu" style="margin-right: 2% !important;">  Contabilidad </span></a></li>
+                    <li><a href="{% url 'catalogo:ordenes-calendario-semanal' %}" class="waves-effect"><i class="ti-calendar"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;">  Calendario </span></a></li>
+            {% endif %}
+            {% if request.user.administrador or request.user.is_superuser %}
+                <li class="nav-small-cap m-t-10" style="padding-left: 10% !important;"> Catalogos</li>
+                <li><a href="{% url 'catalogo:clientes-list' %}" class="waves-effect"><i class="ti-id-badge"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;">Clientes</span></a></li>
+                <li><a href="{% url 'catalogo:proveedores-list' %}" class="waves-effect"><i
+                        class="ti-shopping-cart"></i>
+                    <span
+                            class="hide-menu" style="margin-right: 2% !important;"> Proveedores </span></a></li>
+                <li><a href="{% url 'catalogo:productos-list' %}" class="waves-effect"><i class="ti-bag"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;"> Productos </span></a></li>
+                <li><a href="{% url 'catalogo:shipper-list' %}" class="waves-effect"><i class="ti-truck"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;">  Shipper Points </span></a></li>
+                <li><a href="{% url 'catalogo:delivery-list' %}" class="waves-effect"><i class="ti-truck"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;">  Delivery Points </span></a></li>
+                <li class="nav-small-cap m-t-10" style="padding-left: 10% !important;"> Administración</li>
+
+                <li><a href="{% url 'catalogo:usuarios-list' %}" class="waves-effect"><i class="ti-user"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;">  Usuarios </span></a></li>
+                <li class="nav-small-cap m-t-10" style="padding-left: 10% !important;"> Reportes</li>
+                <li><a href="{% url 'catalogo:reporte-contabilidad' %}" class="waves-effect"><i class="ti-image"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;">  Tarifas </span></a></li>
+                <li><a href="{% url 'catalogo:reporte-rutas' %}" class="waves-effect"><i class="ti-image"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;">  Cotizador </span></a></li>
+                <li><a href="{% url 'catalogo:reporte-cliente-listado' %}" class="waves-effect"><i class="ti-user"></i> <span
+                        class="hide-menu" style="margin-right: 2% !important;">  Clientes </span></a></li>
+                <li><a href="{% url 'catalogo:utilidad-ordenes' %}" class="waves-effect"><i class="ti-user"></i> <span
+                                class="hide-menu" style="margin-right: 2% !important;">  Utilidad </span></a></li>
+
+            {% endif %}
+
+        </ul>
+    </div>
+</div>

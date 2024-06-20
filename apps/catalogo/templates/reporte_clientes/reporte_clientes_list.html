@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+
+    <style>
+        b {
+            color: red;
+        }
+
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">LISTADO</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Reportes</li>
+                <li class="active">Cliente</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row">
+        <div class="col-lg-12 text-right">
+            <div class="button-box">
+                {#                <button class="btn btn-danger"> Importar <i class="ti-share-alt ml-3"#}
+                {#                                                            style="font-size: 1.5rem"></i></button>#}
+                {#                <button class="btn btn-info"> Exportar <i class="ti-share ml-3"#}
+                {#                                                          style="font-size: 1.5rem"></i></button>#}
+
+                <a type="button" href="{% url 'catalogo:reporte-cliente-add' %}" class="btn btn-success"> Nuevo Reporte
+                    <i
+                            class="ti-image ml-3"
+                            style="font-size: 1.5rem"></i></a>
+            </div>
+        </div>
+        <div class="col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Reporte</th>
+                        <th>Campos</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for reporte in reportes %}
+                        <tr>
+                            <td>{{ reporte.cliente.nombre }}</td>
+                            <td>{{ reporte.nombre }}</td>
+                            <td>
+                                <ul>
+                                    {% for campo in reporte.get_campos %}
+                                        <li>{{ campo }}</li>
+                                    {% endfor %}
+                                </ul>
+
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-danger" onclick="deleteReporteCliente('{{ reporte.pk }}','{{ reporte.nombre}}','{{ reporte.cliente.nombre }}')"><i class="ti-trash"></i></button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#myTable').DataTable({
+                columnDefs: [{
+                    orderable: false,
+                    targets: [3]
+                }],
+                reponsive: true,
+                "pageLength": 50,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+        })
+
+        const deleteReporteCliente = (reporteID,reporteName,repoteClienteName) => {
+          Swal.fire({
+                title: '¡Peligro!',
+                text: `¿Desea eliminar el reporte ${reporteName} que pertenece al cliente ${repoteClienteName}`,
+                type: 'warning',
+                confirmButtonText: 'Aceptar'
+            }).then((result) => {
+                console.log(result)
+                /* Read more about isConfirmed, isDenied below */
+                if (result.value) {
+                    $.ajax({
+                        url: '{% url 'catalogo:reporte-cliente-delete' %}',
+                        type: 'POST',
+                        beforeSend: (xhr) => {
+                            xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                        },
+                        data: {
+                            reporteID : reporteID
+                        },
+                        success: function (response) {
+                            window.location.reload()
+                        },
+                        error: (e) => {
+                            Swal.fire({
+                                title: '¡Error!',
+                                text: e.responseJSON.message,
+                                type: 'error',
+                                confirmButtonText: 'Intentar nuevamente'
+                            })
+                        }
+                    });
+                }
+            })
+        }
+    </script>
+
+
+{% endblock %}

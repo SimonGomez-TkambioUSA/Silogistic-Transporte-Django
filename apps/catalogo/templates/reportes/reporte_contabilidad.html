@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+    <style>
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">Reporte Contabilidad</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Reportes</li>
+                <li class="active"> Tarifas</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row mt-5">
+        <div class="floating-labels col-md-12 col-sm-12 col-lg-12 row">
+            <div class="col-md-4 col-sm-4 col-lg-4">
+            <input type="date"
+                   class="form-control" id="startDate"
+                   name="startDate">
+            <span class="highlight"></span>
+            <span class="bar"></span>
+            <label for="startDate"> Fecha Inicio </label>
+        </div>
+            <div class="col-md-4 col-sm-4 col-lg-4">
+            <input type="date"
+                   class="form-control" id="endDate"
+                   name="endDate">
+            <span class="highlight"></span>
+            <span class="bar"></span>
+            <label for="endDate"> Fecha Fin </label>
+        </div>
+            <div class="col-md-4 col-sm-4 col-lg-4">
+            <button type="button" class="btn btn-danger waves-effect mr-3" onclick="filterDates()">
+                <i class="ti-search"></i> Buscar
+            </button>
+            <button type="button" class="btn btn-success waves-effect" onclick="exportacionReporteContabilidad()"><i class="ti-export"></i> Exportar</button>
+        </div>
+        </div>
+        <div class="col-md-12 col-sm-12 col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th style="display: none;"></th>
+                        <th>No. Orden</th>
+                        <th> Proveedor</th>
+                        <th> Origen</th>
+                        <th> Destino</th>
+                        <th> Costo Proveedor</th>
+                        <th> EQ. Type</th>
+                        <th> Creación</th>
+                    </tr>
+                    </thead>
+                    <tbody id="bodyOrdenes">
+                    {% for orden in ordenes %}
+                        <tr>
+                            <td style="display: none;"></td>
+                            <td> ORD-000{{ orden.id }}</td>
+                            <td> {{ orden.proveedor }}</td>
+                            <td> {{ orden.origen }}</td>
+                            <td> {{ orden.destino }}</td>
+                            <td> {{ orden.costo_proveedor |default:"N/A" }}</td>
+                            <td>
+                                {% if orden.eq_type == 1 %}
+                                    22' VAN
+                                {% elif orden.eq_type == 2 %}
+                                    48' DRY VAN
+                                {% elif orden.eq_type == 3 %}
+                                    48' REEFER
+                                {% elif orden.eq_type == 4 %}
+                                    53' DRY VAN
+                                {% elif orden.eq_type == 5 %}
+                                    53' REEFER
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td> {{ orden.creacion }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+            integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="application/javascript">
+        var DataTable
+        $(document).ready(function () {
+            loadStyleTable()
+        });
+
+        const filterDates = () => {
+            let bodyOrdenes = $('#bodyOrdenes')
+            let startDate = $('#startDate').val()
+            let endDate = $('#endDate').val()
+            let arrOrdenes = []
+            $.ajax({
+                url: '{% url 'catalogo:filterDate-reportes' %}',
+                type: 'GET',
+                data: {
+                    'startDate': startDate,
+                    'endDate': endDate,
+                },
+                success: function (response) {
+                    arrOrdenes = response.ordenes;
+                    if (arrOrdenes) {
+                        DataTable.destroy();
+                        bodyOrdenes.html('')
+                        arrOrdenes.map((orden)=>{
+                            const resultado = (orden.eq_type == 1) ? "22' VAN" :
+                            (orden.eq_type == 2) ? "48' DRY VAN" :
+                            (orden.eq_type == 3) ? "48' REEFER" :
+                            (orden.eq_type == 4) ? "53' DRY VAN" :
+                            (orden.eq_type == 5) ? "53' REEFER" :
+                            "N/A";
+                          bodyOrdenes.append(
+                              `
+                              <tr>
+                                <td style="display: none;"></td>
+                                <td> ORD-000${orden.id}</td>
+                                <td> ${orden.proveedor }</td>
+                                <td>${orden.origen}</td>
+                                <td>${orden.destino}</td>
+                                <td>${orden.costo_proveedor ? orden.costo_proveedor : 'N/A'}</td>
+                                <td> ${ resultado }</td>
+                                <td>${orden.creacion}</td>
+                              </tr>
+                              `
+                          )
+                        })
+                        loadStyleTable()
+                    }
+                },
+                error: (e) => {
+                    console.log(e.responseJSON)
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+
+            })
+        }
+
+        const loadStyleTable = () =>{
+            console.log('llego al style')
+            DataTable = $('#myTable').DataTable({
+                orderable: false,
+                reponsive: true,
+                "pageLength": 50,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+        }
+
+        const exportacionReporteContabilidad = () => {
+            let startDate = $('#startDate').val()
+            let endDate = $('#endDate').val()
+            window.open(`/catalogo/reportes/contabilidad/exportacion/?startDate=${startDate}&endDate=${endDate}`, '_blank');
+        }
+    </script>
+{% endblock %}

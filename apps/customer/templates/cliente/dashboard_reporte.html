@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title"> {{ reporte.nombre }}</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Reportes</li>
+                <li class="active"> {{ reporte.nombre }}</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <h3>{{ reporte.nombre }}
+
+            </h3>
+        </div>
+        <div class="col-lg-12 text-right">
+            <div class="button-box">
+                {#                <button class="btn btn-danger"> Importar <i class="ti-share-alt ml-3"#}
+                {#                                                            style="font-size: 1.5rem"></i></button>#}
+                {#                <button class="btn btn-info"> Exportar <i class="ti-share ml-3"#}
+                {#                                                          style="font-size: 1.5rem"></i></button>#}
+                {##}
+                <a class="btn btn-success" type="button" target="_blank" href="{% url 'customer:reportes-cliente-dashboard-export' %}?idReport={{ reporte.get_identificadorReporte }}"> Exportar Datos <i
+                        class="icon-
+                        -follow ml-3"
+                        style="font-size: 1.5rem"></i></a>
+            </div>
+        </div>
+        <div class="col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead>
+                    <tr>
+                        {% for campo in reporte.get_campos %}
+                            <th>{{ campo }}</th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for orden in arrOrdenes %}
+                        <tr>
+                            {% for campo in reporte.get_campos_acceso %}
+                                <td>
+                                    {% if campo == 'eq_type' %}
+                                        {{ orden.get_eq_type_display }}
+                                    {% endif %}
+                                    {% if campo == 'proveedor' %}
+                                        {{ orden.proveedor.nombre }}
+                                    {% endif %}
+                                    {% if campo == 'direccion_origen' %}
+                                        {{ orden.get_origin }}
+                                    {% endif %}
+                                    {% if campo == 'direccion_destino' %}
+                                        {{ orden.get_destination }}
+                                    {% endif %}
+                                    {% if campo == 'tipo_cambio' %}
+                                        {{ orden.get_tipo_cambio_display }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#myTable').DataTable({
+                reponsive: true,
+                "pageLength": 50,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+
+            {#var camposConcatenados = JSON.parse('{{ camposConcatenados | escapejs }}')#}
+            {#console.log(camposConcatenados)#}
+
+
+        })
+
+
+    </script>
+{% endblock %}

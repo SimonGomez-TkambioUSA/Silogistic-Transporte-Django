@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+    <style>
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">Reportes</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Reportes</li>
+                <li><a href="{% url 'catalogo:reporte-cliente-listado' %}">Cliente</a></li>
+                <li class="active">Nuevo</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <form method="post" class="floating-labels row mt-3" id="form-report" style="font-size: 15px !important;"
+          onsubmit="saveDatosReporte(event)">
+          {% csrf_token %}
+          <input type="hidden" id="camposDisponibles" name="camposDisponibles">
+        <div class="col-lg-6 col-sm-6 col-md-6 ">
+            <div class="form-group">
+                <input type="text" class="form-control" id="nombre_reporte"
+                       name="nombre_reporte"
+                       required><span
+                    class="highlight"></span> <span class="bar"></span>
+                <label for="input1"> Nombre del Reporte (<b style="color: red">*</b>)</label>
+            </div>
+        </div>
+        <div class="col-lg-6 col-sm-6 col-md-6">
+            <div class="form-group">
+                <select class="form-control" id="cliente_reporte" name="cliente_reporte"
+                        required>
+                    <option> Seleccione un cliente</option>
+                    {% for cliente in clientes %}
+                        <option value="{{ cliente.pk }}"> {{ cliente.nombre }}</option>
+                    {% endfor %}
+                </select><span class="highlight"></span> <span class="bar"></span>
+                <label for="input6">Cliente (<b style="color: red">*</b>)</label>
+            </div>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 mt-3">
+            <div class="text-center" style="font-weight: bold"> Campos Disponibles</div>
+        </div>
+        {% for campo in camposDisponibles %}
+            <div class="col-lg-3 col-md-3 col-sm-3 mt-3" id="{{ campo.id }}"><input type="checkbox"
+                                                                onchange="saveDeleteCampoArray(event)"
+                                                                value="{{ campo.id }}"> {{ campo.nombre }}
+            </div>
+        {% endfor %}
+                <div class="col-lg-12 col-md-12 col-sm-12 mt-3">
+            <div class="text-center" style="font-weight: bold"> Orden de los campos para el formato</div>
+        </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 mt-5">
+            <table id="tableCampos" class="table table-striped">
+                            <thead id="headTable">
+                                <tr>
+                                    <th style="border-left: 1px solid "></th>
+                                    <th style="border-left: 1px solid "></th>
+                                    <th style="border-left: 1px solid "></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyTable">
+                                <tr>
+                                    <td style="border-left: 1px solid "></td>
+                                    <td style="border-left: 1px solid "></td>
+                                    <td style="border-left: 1px solid "></td>
+                                </tr>
+                            </tbody>
+                        </table>
+         </div>
+        <div class="col-lg-12 col-md-12 col-sm-12 text-center mt-5">
+            <div class="button-box">
+                <button class="btn btn-danger" onclick="window.history.back()"> Cancelar <i class="ti-close ml-3"
+                                                                                            style="font-size: 1.5rem"></i>
+                </button>
+                <button type="submit" class="btn btn-success"> Guardar
+                    <i class="ti-save ml-3" style="font-size: 1.5rem"></i></button>
+            </div>
+        </div>
+    </form>
+{% endblock %}
+{% block javascript %}
+     <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+
+    <script>
+        var arrCamposFormatos = []
+        const saveDeleteCampoArray = (e) => {
+            if (e.target.checked) {
+                arrCamposFormatos.push({
+                    "idCampo": e.target.value
+                })
+            } else {
+                console.log('Unchecked')
+                arrCamposFormatos.splice(arrCamposFormatos.findIndex(element => element.idCampo == e.target.value), 1)
+            }
+            loadTableCamposSelected()
+        }
+
+        const loadTableCamposSelected = () =>{
+            var headTableCampos = $('#headTable')
+            var bodyTableCampos = $('#bodyTable')
+            var thHead = `<tr>`
+            var tdBody =  `<tr>`
+            for (const campoSelected of arrCamposFormatos) {
+                console.log(campoSelected)
+                var divCampoSelected = $(`#${campoSelected.idCampo}`)
+                console.log(divCampoSelected)
+                thHead = thHead + `<th style="border-left: 1px solid "> ${divCampoSelected[0].childNodes[1].nodeValue} </th>`
+                tdBody = tdBody + `<td style="border-left: 1px solid "></td>`
+            }
+            thHead = thHead + `<th style="border-left: 1px solid "> </th> <th style="border-left: 1px solid "> </th><th style="border-left: 1px solid "> </th>`
+            tdBody = tdBody + `<td style="border-left: 1px solid "></td> <td style="border-left: 1px solid "></td> <td style="border-left: 1px solid "></td>`
+            thHead = thHead + `</tr>`
+            headTableCampos.html(thHead)
+            tdBody = tdBody + `</tr>`
+            bodyTableCampos.html(tdBody)
+        }
+
+
+        const saveDatosReporte = (e) => {
+            {#  Detenemos el evento submit para validar el campo de "de campos seleccionados" #}
+            e.preventDefault()
+            console.log('llego aqui')
+            if(arrCamposFormatos.length != 0){
+                $('#camposDisponibles').val(JSON.stringify(arrCamposFormatos))
+                $.ajax({
+                url: window.location.pathname,
+                type: 'POST',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: $('#form-report').serialize(),
+                success: function (response) {
+                    console.log(response, '<-------Response')
+                    {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                    {#Swal.fire({#}
+                    {#    title: '¡Éxito!',#}
+                    {#    text: response.message,#}
+                    {#    type: 'success',#}
+                    {#    confirmButtonText: 'Aceptar'#}
+                    {#s}).then((result) => {#}
+                    {#    console.log(result)#}
+                    {#    /* Read more about isConfirmed, isDenied below */#}
+                    {#    if (result.value) {#}
+                            window.location.reload()
+                    {#    }#}
+                    {#s})#}
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+            }else{
+                Swal.fire({
+                        title: '¡Error!',
+                        text: 'Es necesario agregar campos disponibles al reporte',
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+
+            }
+        }
+    </script>
+{% endblock %}

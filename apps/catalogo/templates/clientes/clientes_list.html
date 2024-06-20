@@ -1,0 +1,701 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+
+    <style>
+        b {
+            color: red;
+        }
+
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">LISTADO</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Catalogos</li>
+                <li class="active">Cliente</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+{% endblock %}
+{% block container %}
+    <div class="row">
+        <div class="col-lg-12 text-right">
+            <div class="button-box">
+                <button class="btn btn-danger"> Importar <i class="ti-share-alt ml-3"
+                                                            style="font-size: 1.5rem"></i></button>
+                {#                <button class="btn btn-info"> Exportar <i class="ti-share ml-3"#}
+                {#                                                          style="font-size: 1.5rem"></i></button>#}
+
+                <button class="btn btn-success" data-toggle="modal" data-target=".bs-example-modal-lg"> Nuevo Cliente <i
+                        class="icon-user-follow ml-3"
+                        style="font-size: 1.5rem"></i></button>
+            </div>
+        </div>
+        <div class="col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Contacto</th>
+                        <th>Correo Électronico</th>
+                        <th>Télefono</th>
+                        <th>Estatus</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for cliente in clientes %}
+                        <tr>
+                            <td>{{ cliente.nombre }}</td>
+                            <td>{{ cliente.get_dates_contacto.nombre }}</td>
+                            <td>{{ cliente.get_dates_contacto.correo }}</td>
+                            <td>{{ cliente.get_dates_contacto.telefono }}</td>
+                            <td class="text-center">
+                                {% if cliente.activo %}
+                                    <span class="label label-success label-rouded"> Activo <i
+                                            class="icon-lock-open"></i></span>
+                                {% else %}
+                                    <span class="label label-danger label-rouded"> Inactivo <i
+                                            class="icon-lock"></i></span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-info" data-toggle="tooltip"
+                                        data-placement="top" title="Editar"
+                                        onclick="ShowInformationEdit('{{ cliente.pk }}','{{ cliente.nombre }}','{{ cliente.nombre_corto }}', '{{ cliente.direccion }}',`{{ cliente.get_contactos }}`)">
+                                    <i class="ti-pencil-alt"></i></button>
+
+                                {% if cliente.activo %}
+                                    <button class="btn btn-danger" data-toggle="tooltip"
+                                            data-placement="top" title="Desactivar"
+                                            onclick="ActivateDeactivateCliente('{{ cliente.pk }}', true)"><i
+                                            class="icon-lock"></i></button>
+                                {% else %}
+                                    <button class="btn btn-success" data-toggle="tooltip"
+                                            data-placement="top" title="Activar"
+                                            onclick="ActivateDeactivateCliente('{{ cliente.pk }}', '')"><i
+                                            class="icon-lock-open"></i></button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!--- Modal crear nuevo cliente -->
+    <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+         aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><i class="icon-user-follow ml-3"
+                                                                      style="font-size: 1.5rem"></i> Nuevo Cliente</h4>
+                </div>
+                <form class="floating-labels" id="form-new-cliente" style="font-size: 15px !important;"
+                      onsubmit="SaveNewCliente(event)">
+                    <div class="modal-body">
+                        <h4 class="text-center"> Datos para el cliente</h4>
+                        {% csrf_token %}
+                        <div class="row mt-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre_cliente" name="nombre_cliente"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Cliente (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre_corto_cliente"
+                                           name="nombre_corto_cliente" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Nombre corto (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="direccion_cliente"
+                                           name="direccion_cliente" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Dirección (<b>*</b>)</label>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="text-center"> Datos del contacto</h4>
+                        <div class="row mt-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre_contacto" name="nombre_contacto"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Nombre (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="telefono_contacto"
+                                           name="telefono_contacto" minlength="10"
+                                           maxlength="10"
+                                           onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Telefono (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="correo_contacto" name="correo_contacto"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Correo Électronico (<b>*</b>)</label>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger waves-effect text-left" data-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success waves-effect text-left"> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!--- ./Modal crear nuevo cliente -->
+
+    <!--- Modal editar cliente -->
+
+    <div class="modal" id="modal-edit-cliente" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+         aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><i class="icon-user-follow ml-3"
+                                                                      style="font-size: 1.5rem"></i> Nuevo Cliente</h4>
+                </div>
+                <form class="floating-labels" id="form-new-cliente" style="font-size: 15px !important;"
+                      onsubmit="SaveNewCliente(event)">
+                    <div class="modal-body">
+                        <h4 class="text-center"> Datos para el cliente</h4>
+                        {% csrf_token %}
+                        <div class="row mt-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre_cliente_update"
+                                           name="nombre_cliente_update"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Cliente (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre_corto_cliente_update"
+                                           name="nombre_corto_cliente_update" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Nombre corto (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="direccion_cliente_update"
+                                           name="direccion_cliente_update" required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Dirección (<b>*</b>)</label>
+                                </div>
+                            </div>
+                        </div>
+                        <h4 class="text-center"> Contacto(s)</h4>
+                        <div class="row mt-5">
+                            <div class="col-lg-12 text-right">
+                                <button type="button" class="btn btn-success" onclick="ShowModalDatosContactos()">
+                                    Nuevo contacto <i
+                                        class="icon-user-follow ml-3"
+                                        style="font-size: 1.5rem"></i></button>
+                            </div>
+                            <div class="col-lg-12">
+                                <table id="TableContacts" class="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Correo Électronico</th>
+                                        <th>Telefono</th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="datos_contacto">
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger waves-effect text-left" data-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success waves-effect text-left"> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!--- ./Modal editar cliente -->
+
+    <!--- Modal editar cliente -->
+
+    <div class="modal" id="modal-crear-editar-contacto" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+         aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h4 class="modal-title" id="myLargeModalLabel"><i class="icon-user-follow ml-3"
+                                                                      style="font-size: 1.5rem"></i> Nuevo Contacto</h4>
+                </div>
+                <form class="floating-labels" id="form-new-edit-contacto" onsubmit="SaveInformationContactos(event)"
+                      style="font-size: 15px !important;">
+                    <div class="modal-body">
+                        <h4 class="text-center"> Datos del contacto</h4>
+                        <input type="hidden" id="cliente" name="cliente">
+                        <input type="hidden" id="contacto" name="contacto">
+                        {% csrf_token %}
+                        <div class="row mt-5">
+                            <div class="col-lg-4 col-md-4 col-sm-4">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="nombre_new_contacto"
+                                           name="nombre_new_contacto"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Nombre (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-md-3 col-sm-3">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="telefono_new_contacto"
+                                           name="telefono_new_contacto" minlength="10"
+                                           maxlength="10"
+                                           onkeypress='return event.charCode >= 48 && event.charCode <= 57'
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Telefono (<b>*</b>)</label>
+                                </div>
+                            </div>
+                            <div class="col-lg-5 col-md-5 col-sm-5">
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="correo_new_contacto"
+                                           name="correo_new_contacto"
+                                           required><span
+                                        class="highlight"></span> <span class="bar"></span>
+                                    <label for="input1"> Correo Électronico (<b>*</b>)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger waves-effect text-left"
+                                onclick="ShowModalEditarCliente()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success waves-effect text-left"> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!--- ./Modal editar cliente -->
+
+
+
+
+{% endblock %}
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+
+    <script>
+        var datatable = ''
+        var cliente_id = ''
+        var primera_vez = true
+        $(document).ready(function () {
+            $('#myTable').DataTable({
+                columnDefs: [{
+                    orderable: false,
+                    targets: [4, 5]
+                }],
+                reponsive: true,
+                "pageLength": 50,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+        })
+
+
+        const SaveNewCliente = (e) => {
+            e.preventDefault()
+            {# Realizaremos la petición ajax por si hay algun error no recargar la página por completo    #}
+            $.ajax({
+                url: '{% url 'catalogo:cliente-new' %}',
+                type: 'POST',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: $('#form-new-cliente').serialize(),
+                success: function (response) {
+                    console.log(response, '<-------Response')
+                    {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                    {#Swal.fire({#}
+                    {#    title: '¡Éxito!',#}
+                    {#    text: response.message,#}
+                    {#    type: 'success',#}
+                    {#    confirmButtonText: 'Aceptar'#}
+                    {#s}).then((result) => {#}
+                    {#    console.log(result)#}
+                    {#    /* Read more about isConfirmed, isDenied below */#}
+                    {#    if (result.value) {#}
+                    window.location.reload()
+                    {#    }#}
+                    {#s})#}
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+
+        }
+
+        const ActivateDeactivateCliente = (cliente_pk, deactivate) => {
+            {# Realizaremos la petición ajax por si hay algun error no recargar la página por completo    #}
+            $.ajax({
+                url: '{% url 'catalogo:cliente-deactivate-activate' %}',
+                type: 'POST',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: {
+                    cliente_pk: cliente_pk,
+                    deactivate: deactivate
+                },
+                success: function (response) {
+                    console.log(response, '<-------Response')
+                    {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                    {#Swal.fire({#}
+                    {#    title: '¡Éxito!',#}
+                    {#    text: response.message,#}
+                    {#    type: 'success',#}
+                    {#    confirmButtonText: 'Aceptar'#}
+                    {#s}).then((result) => {#}
+                    {#    console.log(result)#}
+                    {#    /* Read more about isConfirmed, isDenied below */#}
+                    {#    if (result.value) {#}
+                    window.location.reload()
+                    {#    }#}
+                    {#s})#}
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+
+
+        }
+
+
+        const ShowInformationEdit = (cliente_pk, nombre_cliente, nombre_corto, direccion, contactos) => {
+            cliente_id = cliente_pk
+            var list_contactos = JSON.parse(contactos.replaceAll("'", '"'))
+            {# Obtenemos el tbody donde se pintara la información de los contactos #}
+            var tbody_contactos = $('#datos_contacto')
+            tbody_contactos.html('')
+            {# Recorremos la lista de contactos para pintar la información una opor uno #}
+            $.each(list_contactos, function (key, contacto) {
+                tbody_contactos.append(`
+                    <tr>
+                        <td>${contacto.nombre}</td>
+                        <td>${contacto.correo}</td>
+                        <td>${contacto.telefono}</td>
+                        <td>
+                            <button type="button" class="btn btn-info btn-sm mb-3" data-toggle="tooltip"
+                                        data-placement="top" title="Editar" onclick="ShowModalDatosContactos('${contacto.id}','${contacto.nombre}','${contacto.telefono}','${contacto.correo}')">
+                                    <i class="ti-pencil-alt"></i></button>
+
+                            <button type="button" class="btn btn-danger btn-sm" data-toggle="tooltip" onclick="DeleteContactoCliente('${contacto.id}', '${contacto.nombre}')"
+                                        data-placement="top" title="Eliminar">
+                                    <i class="ti-trash"></i></button>
+                        </td>
+                    </tr>
+                `)
+            });
+
+            {# Asignamos los valores generales del cliente #}
+            $('#nombre_cliente_update').val(nombre_cliente)
+            $('#nombre_corto_cliente_update').val(nombre_corto)
+            $('#direccion_cliente_update').val(direccion)
+            {#loadContactCliente(cliente_pk)#}
+            loadStyleTable()
+            $('#modal-edit-cliente').modal('toggle')
+        }
+
+        const loadStyleTable = () => {
+            if (primera_vez) {
+                datatable = $('#TableContacts').DataTable({
+                    columnDefs: [{
+                        orderable: false,
+                        targets: [3]
+                    }],
+                    reponsive: true,
+                    "searching": false,
+                    "lengthChange": false,
+                    "pageLength": 5,
+                    "language": {
+                        "search": "Búsqueda",
+                        "paginate": {
+                            "first": "Primera",
+                            "last": "Última",
+                            "next": "Siguiente",
+                            "previous": "Anterior"
+                        },
+                        "lengthMenu": "Mostrar _MENU_ registros",
+                        "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                        "zeroRecords": "No se encontraron resultados",
+                        "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                        "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                    }
+                });
+                primera_vez = false
+            } else {
+                datatable.destroy()
+                primera_vez = true
+                loadStyleTable()
+            }
+
+        }
+
+
+        const ShowModalDatosContactos = (pk_contacto = '', nombre = '', telefono = '', correo = '') => {
+            {# Ocultaremos el modal de mostrar la información de la plaza #}
+            $('#modal-edit-cliente').modal('toggle')
+            {# Le asignaremos los valores mandados o por default al modal   #}
+            $('#contacto').val(pk_contacto)
+            $('#nombre_new_contacto').val(nombre)
+            $('#telefono_new_contacto').val(telefono)
+            $('#correo_new_contacto').val(correo)
+            {#    Mostraremos el modal de crear el dato del cliente#}
+            $('#modal-crear-editar-contacto').modal('toggle')
+            {#  Le asignamos el valor del cliente al input hidden  #}
+            $('#cliente').val(cliente_id)
+
+        }
+
+        const ShowModalEditarCliente = () => {
+            {# Mostraremos el modal de mostrar la información del cliente #}
+            $('#modal-edit-cliente').modal('toggle')
+            {#    Ocultaremos  el modal de crear el dato del cliente#}
+            $('#modal-crear-editar-contacto').modal('toggle')
+        }
+
+
+        const SaveInformationContactos = (e) => {
+            e.preventDefault()
+            $.ajax({
+                url: '{% url 'catalogo:cliente-contacto-save-edit' %}',
+                type: 'POST',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: $('#form-new-edit-contacto').serialize(),
+                success: function (response) {
+                    console.log(response, '<-------Response')
+                    {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                    {#Swal.fire({#}
+                    {#    title: '¡Éxito!',#}
+                    {#    text: response.message,#}
+                    {#    type: 'success',#}
+                    {#    confirmButtonText: 'Aceptar'#}
+                    {#s}).then((result) => {#}
+                    {#    console.log(result)#}
+                    {#    /* Read more about isConfirmed, isDenied below */#}
+                    {#    if (result.value) {#}
+                    UpdateTableContactos(true)
+                    {#    }#}
+                    {#s})#}
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+        }
+
+        const UpdateTableContactos = (nivel = false) => {
+            {# Realizaremos la petición AJAX para obtener los nuevos datos #}
+            $.ajax({
+                url: '{% url 'catalogo:cliente-contacto-lista' %}',
+                type: 'GET',
+                beforeSend: (xhr) => {
+                    xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                },
+                data: {
+                    cliente: cliente_id
+                },
+                success: function (response) {
+                    console.log(response.contactos, '<--------- Response contactos')
+
+                    {# Destruimos la table de contactos #}
+                    datatable.destroy()
+                    primera_vez = true
+                    {# Obtenemos el tbody donde se pintara la información de los contactos #}
+                    var tbody_contactos = $('#datos_contacto')
+                    tbody_contactos.html('')
+
+                    {# Recorremos la lista de contactos para pintar la información una opor uno #}
+                    $.each(response.contactos, function (key, contacto) {
+                        tbody_contactos.append(`
+                    <tr>
+                        <td>${contacto.nombre}</td>
+                        <td>${contacto.correo}</td>
+                        <td>${contacto.telefono}</td>
+                        <td>
+                            <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip"
+                                        data-placement="top" title="Editar" onclick="ShowModalDatosContactos('${contacto.id}','${contacto.nombre}','${contacto.telefono}','${contacto.correo}')">
+                                    <i class="ti-pencil-alt"></i></button>
+
+                            <button type="button" class="btn btn-danger btn-sm" data-toggle="tooltip" onclick="DeleteContactoCliente('${contacto.id}', '${contacto.nombre}')"
+                                        data-placement="top" title="Eliminar">
+                                    <i class="ti-trash"></i></button>
+                        </td>
+                    </tr>
+                        `)
+                    });
+                    loadStyleTable()
+
+                },
+                error: (e) => {
+                    Swal.fire({
+                        title: '¡Error!',
+                        text: e.responseJSON.message,
+                        type: 'error',
+                        confirmButtonText: 'Intentar nuevamente'
+                    })
+                }
+            });
+
+            if (nivel) {
+                {# Mostraremos el modal de mostrar la información del cliente #}
+                $('#modal-edit-cliente').modal('toggle')
+                {#    Ocultaremos  el modal de crear el dato del cliente#}
+                $('#modal-crear-editar-contacto').modal('toggle')
+            }
+
+        }
+
+        const DeleteContactoCliente = (pk_contacto, nombre_contacto) => {
+            Swal.fire({
+                title: '¡Peligro!',
+                text: '¿Deseas eliminar el contacto: ' + nombre_contacto,
+                type: 'warning',
+                confirmButtonText: 'Aceptar'
+            }).then((result) => {
+                console.log(result)
+                /* Read more about isConfirmed, isDenied below */
+                if (result.value) {
+                    $.ajax({
+                        url: '{% url 'catalogo:cliente-contacto-eliminar' %}',
+                        type: 'POST',
+                        beforeSend: (xhr) => {
+                            xhr.setRequestHeader('X-CSRFToken', '{{csrf_token}}')
+                        },
+                        data: {
+                            contacto: pk_contacto
+                        },
+                        success: function (response) {
+                            console.log(response.contactos, '<--------- Response contactos')
+                            {# Una vez que obtuvimos una respuesta exitosa mostramos mensaje y recargaremos la pagina para actualizar la table #}
+                            {#Swal.fire({#}
+                            {#    title: '¡Éxito!',#}
+                            {#    text: response.message,#}
+                            {#    type: 'success',#}
+                            {#    confirmButtonText: 'Aceptar'#}
+                            {#s}).then((result) => {#}
+                            {#    console.log(result)#}
+                            {#    /* Read more about isConfirmed, isDenied below */#}
+                            {#    if (result.value) {#}
+                            UpdateTableContactos()
+                            {#    }#}
+                            {#w})#}
+                        },
+                        error: (e) => {
+                            Swal.fire({
+                                title: '¡Error!',
+                                text: e.responseJSON.message,
+                                type: 'error',
+                                confirmButtonText: 'Intentar nuevamente'
+                            })
+                        }
+                    });
+                }
+            })
+        }
+    </script>
+
+
+{% endblock %}

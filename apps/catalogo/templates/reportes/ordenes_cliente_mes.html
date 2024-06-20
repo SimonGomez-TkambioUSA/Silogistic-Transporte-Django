@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+    <style>
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">Reporte Mensual</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Reportes</li>
+                <li class="active"> Utilidad Mensual</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+{% endblock %}
+{% block container %}
+<div class="row">
+    <ul class="nav nav-pills col-lg-12 row text-center">
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 1 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Enero</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 2 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Febrero</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 3 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Marzo</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 4 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Abril</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 5 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Mayo</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 6 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Junio</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 7 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Julio</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 8 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Agosto</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 9 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Septiembre</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 10 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Octubre</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 11 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Noviembre</a>
+        </li>
+        <li class="nav-item col-lg-1 ">
+            <a class="nav-link {% if mesSelected == 12 %}
+            active
+            {% endif %}" href="#" onclick="redirectFilter()">Diciembre</a>
+        </li>
+    </ul>
+    <div class="col-lg-12 mt-5">
+        <div class="table-responsive">
+            <table id="myTable" class="table table-striped">
+                <thead>
+                <tr>
+                    <th style="display: none;"></th>
+                    <th>Orden</th>
+                    <th>Shipment Status</th>
+                    <th>Ejecutivo</th>
+                    <th> Cliente </th>
+                    <th> Fecha de Carga </th>
+                    <th> Equipo </th>
+                    <th> # Economico </th>
+                    <th> Remisión </th>
+                    <th> Transportista</th>
+                    <th> Origen </th>
+                    <th> Destino </th>
+                    <th> Compra </th>
+                    <th> Venta </th>
+                    <th> Utilidad MX </th>
+                    <th> % Utilidad </th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for orden in ordenes %}
+                    <tr>  
+                        <td style="display: none;"></td>  
+                        <td> ORD-000{{ orden.id }}</td>
+                        <td> {{ orden.shipment_status }}</td>
+                        <td> {{ orden.ejecutivo }}</td>
+                        <td> {{ orden.cliente }} </td>
+                        <td> {{ orden.fecha_carga }} </td>
+                        <td>  
+                            {% if orden.eq_type == 1 %}
+                            22' VAN
+                            {% elif orden.eq_type == 2 %}
+                                48' DRY VAN
+                            {% elif orden.eq_type == 3 %}
+                                48' REEFER
+                            {% elif orden.eq_type == 4 %}
+                                53' DRY VAN
+                            {% elif orden.eq_type == 5 %}
+                                53' REEFER
+                            {% else %}
+                                N/A
+                            {% endif %} 
+                        </td>
+                        <td> {{ orden.economico }} </td>
+                        <td> {{ orden.remision }} </td>
+                        <td> {{ orden.proveedor }}</td>
+                        <td> {{ orden.origen }} </td>
+                        <td> {{ orden.destino }} </td>
+                        <td> ${{ orden.compra }} </td>
+                        <td> ${{ orden.venta }} </td>
+                        <td> ${{ orden.utilidad_mx }} </td>
+                        <td> 0
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+
+    <script>
+        $(document).ready(()=>{
+            $('#myTable').DataTable({
+                columnDefs: [{
+                    orderable: false,
+                    targets: [0]
+                }],
+                reponsive: true,
+                "pageLength": 25,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+        })
+    </script>
+{% endblock %}

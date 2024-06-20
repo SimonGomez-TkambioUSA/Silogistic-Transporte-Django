@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+    <link href="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.css' %}" rel="stylesheet"
+          type="text/css"/>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .floating-labels .form-control {
+            font-size: 15px !important;
+        }
+
+        .dataTables_length{
+            display: none;
+        }
+
+    </style>
+{% endblock %}
+{% block titlecontainer %}
+    <div class="row bg-title">
+        <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+            <h4 class="page-title">Reporte Rutas</h4></div>
+        <div class="col-lg-9 col-sm-8 col-md-8 col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li>Reportes</li>
+                <li class="active"> Rutas</li>
+            </ol>
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+{% endblock %}
+{% block container %}
+    <div class="row mt-5">
+        {% comment %} <div class="floating-labels col-md-12 col-sm-12 col-lg-12 row">
+            <div class="col-md-3 col-sm-3 col-lg-3">
+                <select class="form-control selectpicker p-0 js-example-basic-single " id="exitAddress"
+                        name="exitAddress">
+                    <option value="" selected></option>
+                    {% for ciudad in ciudades %}
+                        <option value="{{ ciudad.id }}"> {{ ciudad.nombre }} - {{ ciudad.estado_clave }}</option>
+                    {% endfor %}
+                </select><span class="highlight"></span> <span class="bar"></span>
+                <label for="eq_type_orden"> Dirección Origen</label>
+            </div>
+            <div class="col-md-3 col-sm-3 col-lg-3">
+                <select class="form-control selectpicker p-0 js-example-basic-single" id="destinationAddress"
+                        name="destinationAddress">
+                    <option value="" selected></option>
+                    {% for ciudad in ciudades %}
+                        <option value="{{ ciudad.pk }}"> {{ ciudad.nombre }} - {{ ciudad.estado_clave }}</option>
+                    {% endfor %}
+                </select><span class="highlight"></span> <span class="bar"></span>
+                <label for="eq_type_orden"> Dirección Destino</label>
+            </div>
+            <div class="col-md-3 col-sm-3 col-lg-3">
+                <select class="form-control p-0" id="eq_type" name="eq_type">
+                    <option></option>
+                    <option value="1">VAN</option>
+                    <option value="2">DRY VAN
+                    </option>
+                    <option value="3">REEFER</option>
+                </select><span class="highlight"></span> <span class="bar"></span>
+                <label for="eq_type_orden"> EQ Type</label>
+            </div>
+            <div class="col-md-3 col-sm-3 col-lg-3">
+                <button type="button" class="btn btn-danger waves-effect mr-3" onclick="filterAddress()">
+                    <i class="ti-search"></i> Buscar
+                </button>
+            </div>
+        </div> {% endcomment %}
+        <div class="col-md-12 col-sm-12 col-lg-12 mt-5">
+            <div class="table-responsive">
+                <table id="myTable" class="table table-striped">
+                    <thead id="headTable">
+                    <tr>
+                        <th>No. Orden</th>
+                        <th> EQ Type</th>
+                        <th> Origen</th>
+                        <th> Destino</th>
+                        <th> Precio Cliente</th>
+                        <th> Precio Cliente Adicional</th>
+                        <th> Costo Proveedor</th>
+                        <th> Costo Proveedor Adicional</th>
+                        <th> Utilidad</th>
+                        <th> Creación</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block javascript %}
+    <script src="{% static 'assets/plugins/bower_components/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+            integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script type="application/javascript">
+        var DataTable
+        var urlData = '/catalogo/listado/ordenes/paginacion/'
+        $(document).ready(function () {
+            loadStyleTable()
+            $('.js-example-basic-single').select2();
+        });
+
+        const filterAddress = () => {
+            let bodyOrdenes = $('#myTable tbody')
+            let exitAddress = $('#exitAddress').val()
+            let destinationAddress = $('#destinationAddress').val()
+            let eqType = $('#eq_type').val()
+            let arrOrdenes = []
+            DataTable.destroy()
+            bodyOrdenes.html('')
+            if(exitAddress == '' && destinationAddress == '' && eqType == ''){
+                console.log('Entro vacio')
+                urlData = '/catalogo/listado/ordenes/paginacion/'
+                
+            }else{
+                urlData = `/catalogo/listado/ordenes/paginacion/?origen=${exitAddress}&destino=${destinationAddress}&eq_type=${eqType}`
+            }
+            loadStyleTable()
+        }
+
+        const loadStyleTable = () => {
+            DataTable = $('#myTable').DataTable({
+                'ajax': {
+                    'url': urlData,
+                    'data': function(d) {
+                        d.page = $('#myTable').DataTable().page.info().page + 1;  // Ajusta según la indexación de página
+                    },
+                    'dataSrc': 'data',
+                },
+                'columns': [
+                    {
+                        'data': 'id',
+                        'render': function(data, type, row) {
+                            // Puedes formatear o agregar texto adicional aquí
+                            return 'ORD-000' + data;
+                        }
+                    },
+                    {'data': 'eq_type'},                  
+                    {'data': 'origen'},                  
+                    {'data': 'destino'},                  
+                    {'data': 'costo_cliente'},                  
+                    {'data': 'costo_adicional_cliente'},                  
+                    {'data': 'costo_proveedor'},                  
+                    {'data': 'costo_adicional_proveedor'},                  
+                    {'data': 'utilidad'},                  
+                    {'data': 'created_at'},                  
+
+                    // Agrega más columnas según tus necesidades
+                ],
+                'serverSide': true,  // Habilita el modo server-side
+                'paging': true,
+                "pageLength": 50,
+                reponsive: true,
+                "language": {
+                    "search": "Búsqueda",
+                    "paginate": {
+                        "first": "Primera",
+                        "last": "Última",
+                        "next": "Siguiente",
+                        "previous": "Anterior"
+                    },
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                    "zeroRecords": "No se encontraron resultados",
+                    "infoFiltered": "(filtrando de _MAX_ registros en total)",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ de registros",
+                }
+            });
+        }
+
+    </script>
+
+{% endblock %}
