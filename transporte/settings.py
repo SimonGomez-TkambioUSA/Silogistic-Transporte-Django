@@ -45,10 +45,10 @@ SECRET_KEY = get_secret("SECRET_KEY")
 # DEBUG = get_secret("DEBUG")
 # settings.py
 
-DEBUG = False
+DEBUG = get_secret("DEBUG")
 
 
-ALLOWED_HOSTS = ["silogistic-transporte-django.onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["*"]
 
 CSRF_TRUSTED_ORIGINS = ["https://silogistic-transporte-django.onrender.com"]
 
@@ -159,8 +159,9 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 IP_SERVER = get_secret("IP_SERVER")
 
-MEDIA_ROOT = "{}/media/".format(BASE_DIR)
-MEDIA_URL = "media/"
+# MEDIA_ROOT = "{}/media/".format(BASE_DIR)
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
+MEDIA_URL = "/media/"
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 65536000000
 
@@ -223,8 +224,4 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
-
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-
-# CORS_REPLACE_HTTPS_REFERER = False
+CSRF_COOKIE_HTTPONLY = False
